@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- ── SEO Meta Tags ── -->
+    <title>Kho IPA Store - Tải Ứng Dụng iOS Mod, Game Hack Miễn Phí</title>
+    <meta name="description" content="Kho ứng dụng IPA Store tổng hợp từ nhiều nguồn uy tín (CyPwn, AppTesters, Sidelix...). Tải game hack, ứng dụng mod mở khóa VIP, Premium miễn phí cho iPhone/iPad qua Esign, Scarlet, AltStore.">
+    <meta name="keywords" content="khoipa, ipa store, tai ipa, ios ipa, game hack ios, app mod ios, esign, scarlet, altstore, cypwn, apptesters, sidelix, ipa tiêm vip, ipa mo khoa premium">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="KhoiPA">
+    
+    <!-- ── Open Graph / Facebook / Zalo ── -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://khoipa.github.io/">
+    <meta property="og:title" content="Kho IPA Store - Tải Ứng Dụng iOS Mod, Game Hack Miễn Phí">
+    <meta property="og:description" content="Tổng hợp ứng dụng IPA mod mở khóa VIP, game hack cho iOS từ các nguồn uy tín. Tải nhanh, cài đặt dễ dàng qua Esign, Scarlet.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/apptesters-org/AppTesters_Repo/main/icons/com.aoklab.fewerphotos.png">
+
+    <!-- ── Twitter ── -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://khoipa.github.io/">
+    <meta property="twitter:title" content="Kho IPA Store - Tải Ứng Dụng iOS Mod, Game Hack Miễn Phí">
+    <meta property="twitter:description" content="Tổng hợp ứng dụng IPA mod mở khóa VIP, game hack cho iOS từ các nguồn uy tín. Tải nhanh, cài đặt dễ dàng qua Esign, Scarlet.">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/apptesters-org/AppTesters_Repo/main/icons/com.aoklab.fewerphotos.png">
+
+    <!-- ── Favicon ── -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/apptesters-org/AppTesters_Repo/main/icons/com.aoklab.fewerphotos.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/apptesters-org/AppTesters_Repo/main/icons/com.aoklab.fewerphotos.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --app-blue: #007AFF;
+            --app-gray: #8E8E93;
+            --app-bg: #F2F2F7;
+            --app-card: #FFFFFF;
+            --app-separator: #E5E5EA;
+            --safe-bottom: env(safe-area-inset-bottom, 16px);
+        }
+        
+        * { -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background: var(--app-bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: calc(20px + var(--safe-bottom));
+            margin: 0;
+            overscroll-behavior: none;
+        }
+
+        /* ── Header Container ── */
+        .sticky-header-container {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 9999;
+            background: rgba(242, 242, 247, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid var(--app-separator);
+        }
+
+        /* ── Header ── */
+        .app-header {
+            padding: 12px 16px 4px;
+        }
+        .app-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0;
+            color: #000;
+        }
+        .app-header .subtitle {
+            font-size: 13px;
+            color: var(--app-gray);
+            margin-top: 2px;
+        }
+
+        /* ── Search Bar ── */
+        .search-bar {
+            margin: 8px 16px;
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 8px 16px 8px 36px;
+            border: none;
+            border-radius: 10px;
+            background: #E5E5EA;
+            font-size: 15px;
+            color: #000;
+            outline: none;
+            transition: background 0.2s;
+        }
+        .search-bar input:focus { background: #DCDCE0; }
+        .search-bar .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8E8E93;
+            font-size: 16px;
+        }
+
+        /* ── Category Filter Bar ── */
+        .category-filter-bar {
+            display: flex;
+            overflow-x: auto;
+            padding: 4px 16px 10px;
+            gap: 8px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            transform: translate3d(0, 0, 0);
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+        .category-filter-bar::after {
+            content: '';
+            flex: 0 0 16px;
+        }
+        .category-filter-bar::-webkit-scrollbar { display: none; }
+        .category-filter-item {
+            flex-shrink: 0;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--app-blue);
+            background: #E8F0FE;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+            border: none;
+            outline: none;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            position: relative;
+            transform: translate3d(0, 0, 0);
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+        .category-filter-item.active {
+            background: var(--app-blue);
+            color: #fff;
+        }
+        .category-filter-item:active { opacity: 0.7; }
+
+        /* ── Bottom Tab Bar ── */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(249, 249, 249, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid var(--app-separator);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 var(--safe-bottom);
+            z-index: 100;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-size: 10px;
+            color: var(--app-gray);
+            transition: color 0.15s;
+            min-width: 60px;
+        }
+        .tab-item.active { color: var(--app-blue); }
+        .tab-item i { font-size: 22px; }
+        .tab-item span { font-weight: 500; }
+
+        /* ── Page Content ── */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ── Section Title ── */
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            padding: 8px 16px;
+            margin: 16px 0 8px;
+            color: #000;
+        }
+
+        /* ── App List Item (Apple Style) ── */
+        .app-list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--app-card);
+            border-bottom: 0.5px solid var(--app-separator);
+            cursor: pointer;
+            transition: background 0.1s;
+            gap: 12px;
+        }
+        .app-list-item:active { background: #E5E5EA; }
+        
+        .app-list-item .app-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 13px;
+            object-fit: cover;
+            background: #F2F2F7;
+            flex-shrink: 0;
+        }
+        .app-list-item .app-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .app-list-item .app-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-list-item .app-dev {
+            font-size: 13px;
+            color: var(--app-gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-list-item .app-desc {
+            font-size: 12px;
+            color: var(--app-gray);
+            margin-top: 1px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .app-list-item .app-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+        .app-list-item .app-badge {
+            font-size: 11px;
+            background: #F2F2F7;
+            color: var(--app-gray);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+        }
+        .app-list-item .get-btn {
+            background: var(--app-blue);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 6px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: opacity 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .app-list-item .get-btn:hover { opacity: 0.85; color: #fff; }
+        .app-list-item .get-btn:active { opacity: 0.7; }
+
+        /* ── Category Section ── */
+        .category-section {
+            margin-bottom: 8px;
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 16px 8px;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            background: #F2F2F7;
+            z-index: 5;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .category-icon {
+            font-size: 20px;
+        }
+        .category-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #000;
+            flex: 1;
+        }
+        .category-count {
+            font-size: 14px;
+            color: var(--app-gray);
+        }
+        .category-apps .app-list-item {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        /* ── Repo List Item ── */
+        .repo-list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--app-card);
+            border-bottom: 0.5px solid var(--app-separator);
+            cursor: pointer;
+            gap: 12px;
+            transition: background 0.1s;
+        }
+        .repo-list-item:active { background: #E5E5EA; }
+        .repo-list-item .repo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #007AFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .repo-list-item .repo-icon.all { background: linear-gradient(135deg, #5856D6, #AF52DE); }
+        .repo-list-item .repo-info { flex: 1; min-width: 0; }
+        .repo-list-item .repo-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #000;
+        }
+        .repo-list-item .repo-url {
+            font-size: 12px;
+            color: var(--app-gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .repo-list-item .repo-count {
+            font-size: 12px;
+            color: var(--app-gray);
+            flex-shrink: 0;
+        }
+
+        /* ── Loading ── */
+        .loading-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--app-gray);
+        }
+        .loading-view .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #E5E5EA;
+            border-top-color: var(--app-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Error View ── */
+        .error-view {
+            text-align: center;
+            padding: 40px 20px;
+            color: #FF3B30;
+        }
+        .error-view i { font-size: 40px; margin-bottom: 8px; }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--app-gray);
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+        .empty-state p { font-size: 15px; }
+
+        /* ── Pagination ── */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 16px;
+            gap: 8px;
+            background: transparent;
+        }
+        .pagination-btn {
+            background: var(--app-card);
+            color: var(--app-blue);
+            border: 1px solid var(--app-separator);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pagination-btn:active:not(:disabled) {
+            background: #E5E5EA;
+            transform: scale(0.95);
+        }
+        .pagination-btn:disabled {
+            color: var(--app-gray);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            font-size: 14px;
+            font-weight: 500;
+            color: #000;
+            padding: 0 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Header Container -->
+    <div class="sticky-header-container">
+        <!-- Header -->
+        <div class="app-header" id="appHeader">
+            <h1 id="headerTitle">IPA Store</h1>
+            <div class="subtitle" id="headerSubtitle"></div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Tìm kiếm ứng dụng...">
+        </div>
+
+        <!-- Category Filter Bar (Horizontal Scroll) -->
+        <div class="category-filter-bar" id="categoryFilterBar">
+            <button type="button" class="category-filter-item active" data-category="all">Tất cả</button>
+            <button type="button" class="category-filter-item" data-category="game">🎮 Trò chơi</button>
+            <button type="button" class="category-filter-item" data-category="video">🎬 Video & Phim</button>
+            <button type="button" class="category-filter-item" data-category="social">💬 Mạng xã hội</button>
+            <button type="button" class="category-filter-item" data-category="photo">📸 Ảnh & Video</button>
+            <button type="button" class="category-filter-item" data-category="utility">🛠 Tiện ích</button>
+            <button type="button" class="category-filter-item" data-category="productivity">💼 Năng suất</button>
+            <button type="button" class="category-filter-item" data-category="music">🎵 Nhạc</button>
+            <button type="button" class="category-filter-item" data-category="other">📦 Khác</button>
+        </div>
+    </div>
+
+    <!-- ==================== APPS PAGE ==================== -->
+    <div class="page active" id="appsPage">
+        <div id="appsSectionTitle" class="section-title d-none"></div>
+        <div class="loading-view" id="loading">
+            <div class="spinner"></div>
+            <span>Đang tải...</span>
+        </div>
+        <div class="error-view d-none" id="error-message"></div>
+        <div class="empty-state d-none" id="emptyState">
+            <i class="bi bi-app"></i>
+            <p>Không tìm thấy ứng dụng nào</p>
+        </div>
+        <div id="appList"></div>
+        <div class="pagination-container d-none" id="paginationContainer">
+            <button class="pagination-btn" id="paginationFirst" disabled>««</button>
+            <button class="pagination-btn" id="paginationPrev" disabled>«</button>
+            <span class="pagination-info" id="paginationInfo">Trang 1 / 1</span>
+            <button class="pagination-btn" id="paginationNext" disabled>»</button>
+            <button class="pagination-btn" id="paginationLast" disabled>»»</button>
+        </div>
+    </div>
+
+    <!-- ==================== REPOS PAGE ==================== -->
+    <div class="page" id="reposPage">
+        <div class="section-title">Repositories</div>
+        <div id="repoList"></div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="tab-bar" style="display:none">
+        <button class="tab-item active" data-page="appsPage" id="tabApps">
+            <i class="bi bi-grid-fill"></i>
+            <span>Ứng dụng</span>
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
