@@ -387,16 +387,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.className = 'app-list-item';
             
+            // Hàm thực hiện tải trực tiếp file IPA bằng cách tạo thẻ iframe ẩn hoặc thẻ a ẩn
+            const triggerDownload = (url) => {
+                if (!url) return;
+                const link = document.createElement('a');
+                link.href = url;
+                // Đặt thuộc tính download để trình duyệt cố gắng tải xuống thay vì mở tab mới
+                link.setAttribute('download', '');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
             if (downloadUrl) {
                 item.style.cursor = 'pointer';
                 item.addEventListener('click', (e) => {
                     if (e.target.closest('.get-btn')) return;
-                    window.open(downloadUrl, '_blank');
+                    triggerDownload(downloadUrl);
                 });
             }
             
             const buttonHtml = downloadUrl 
-                ? `<a href="${downloadUrl.replace(/"/g,'&quot;')}" class="get-btn" target="_blank" onclick="event.stopPropagation()">NHẬN</a>`
+                ? `<button class="get-btn" onclick="event.stopPropagation(); window.location.href='${downloadUrl.replace(/'/g, "\\'")}'">NHẬN</button>`
                 : '';
 
             // Ẩn chữ "unkeyapp" hoặc "unkey" khỏi tên ứng dụng và mô tả nếu có
