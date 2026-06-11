@@ -386,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const item = document.createElement('div');
             item.className = 'app-list-item';
+            
             if (downloadUrl) {
                 item.style.cursor = 'pointer';
                 item.addEventListener('click', (e) => {
@@ -393,17 +394,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.open(downloadUrl, '_blank');
                 });
             }
+            
+            const buttonHtml = downloadUrl 
+                ? `<a href="${downloadUrl.replace(/"/g,'&quot;')}" class="get-btn" target="_blank" onclick="event.stopPropagation()">NHẬN</a>`
+                : '';
+
+            // Ẩn chữ "unkeyapp" hoặc "unkey" khỏi tên ứng dụng và mô tả nếu có
+            let cleanName = app.name || 'Không tên';
+            cleanName = cleanName.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
+            if (!cleanName) cleanName = 'Ứng dụng';
+
+            let cleanDesc = description;
+            if (cleanDesc) {
+                cleanDesc = cleanDesc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
+            }
+
             item.innerHTML = `
-                ${iconUrl ? `<img src="${iconUrl.replace(/"/g,'&quot;')}" class="app-icon" alt="${(app.name||'').replace(/"/g,'&quot;')}" loading="lazy" onerror="this.style.display='none'">` : `<div class="app-icon" style="display:flex;align-items:center;justify-content:center;color:#C7C7CC;font-size:24px;"><i class="bi bi-app"></i></div>`}
+                ${iconUrl ? `<img src="${iconUrl.replace(/"/g,'&quot;')}" class="app-icon" alt="${cleanName.replace(/"/g,'&quot;')}" loading="lazy" onerror="this.style.display='none'">` : `<div class="app-icon" style="display:flex;align-items:center;justify-content:center;color:#C7C7CC;font-size:24px;"><i class="bi bi-app"></i></div>`}
                 <div class="app-info">
-                    <div class="app-name">${(app.name || 'Không tên').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-                    ${description ? `<div class="app-desc" data-raw="${description.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}">${description.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
+                    <div class="app-name">${cleanName.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                    ${cleanDesc ? `<div class="app-desc" data-raw="${cleanDesc.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}">${cleanDesc.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
                     <div class="app-meta">
                         ${version ? `<span class="app-badge">v${version.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>` : ''}
                         ${size ? `<span class="app-badge">${size}</span>` : ''}
                     </div>
                 </div>
-                ${downloadUrl ? `<a href="${downloadUrl.replace(/"/g,'&quot;')}" class="get-btn" target="_blank" onclick="event.stopPropagation()">NHẬN</a>` : ''}
+                ${buttonHtml}
             `;
             return item;
         }
