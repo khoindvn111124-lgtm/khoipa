@@ -226,30 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return (a.name || '').localeCompare(b.name || '');
         });
 
-        // Lưu vào localStorage cache (chỉ lưu các thông tin cần thiết để tránh tràn bộ nhớ 5MB của localStorage)
-        try {
-            // Chỉ giữ lại các trường cần thiết để hiển thị danh sách nhằm tối ưu dung lượng cache
-            const minimizedApps = currentApps.map(app => ({
-                name: app.name,
-                bundleIdentifier: app.bundleIdentifier || app.bundleID,
-                version: app.version,
-                size: app.size,
-                iconURL: app.iconURL || app.icon,
-                downloadURL: app.downloadURL || app.ipaURL || app.url || app.down,
-                localizedDescription: app.localizedDescription || app.description || app.subtitle,
-                versionDate: app.versionDate || app.date || app.addedDate || app.timestamp
-            }));
-            localStorage.setItem('cached_apps', JSON.stringify(minimizedApps));
-            localStorage.setItem('cached_apps_time', Date.now().toString());
-        } catch (e) {
-            console.warn('Không thể lưu cache vào localStorage:', e);
-            // Nếu vẫn tràn, xóa bớt cache cũ
-            try {
-                localStorage.removeItem('cached_apps');
-                localStorage.removeItem('cached_apps_time');
-            } catch (innerEx) {}
-        }
-
         headerTitle.textContent = 'Tất cả';
         headerSubtitle.textContent = '';
         appsSectionTitle.classList.remove('d-none');
@@ -575,24 +551,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Init ──
     headerTitle.textContent = 'IPA Store';
     headerSubtitle.textContent = '';
-
-    // Thử load từ localStorage cache trước để hiển thị ngay lập tức
-    const cachedAppsStr = localStorage.getItem('cached_apps');
-    if (cachedAppsStr) {
-        try {
-            const cached = JSON.parse(cachedAppsStr);
-            if (cached && cached.length > 0) {
-                currentApps = cached;
-                console.log('Đã tải ' + cached.length + ' ứng dụng từ localStorage cache');
-                headerTitle.textContent = 'Tất cả';
-                appsSectionTitle.classList.remove('d-none');
-                redrawApps();
-                hideLoading();
-            }
-        } catch (e) {
-            console.error('Lỗi parse localStorage cache:', e);
-        }
-    }
 
     loadRepos().then(() => fetchAllRepos());
 });
