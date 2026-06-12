@@ -16,19 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginationInfo = document.getElementById('paginationInfo');
 
     let currentApps = [];
-    let allRepos = [
-                "https://repository.apptesters.org",
-        "https://appstore.sidelix.vip/repos/esign.php",
-        "https://ipa.thuthuatjb.com/repo",
-        "http://ittza7aa.com/repo.json",
-        "https://ipa.cypwn.xyz/cypwn.json",
-        "https://fastsign.dev/repo.json",
-        "https://api.unkeyapp.com/v1/application/source.json",
-        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
-        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
-        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json",
-        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtk.json"
-    ];
+    let allRepos = [];
     let allRepoNamesCache = [];
     let activeCategory = 'all';
     
@@ -49,6 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const getTranslateUrl = (text) => {
         return `/api/translate?q=${encodeURIComponent(text)}`;
     };
+
+    // ── Load Repos (Apple list style) ──
+    async function loadRepos() {
+        try {
+            // Tải danh sách repo trực tiếp từ file khoipa.txt tĩnh trên host
+            const response = await fetch('/khoipa.txt');
+            if (!response.ok) throw new Error('Không thể tải khoipa.txt');
+            const text = await response.text();
+            allRepos = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            renderRepoList(allRepos);
+        } catch (error) {
+            console.error('Lỗi tải danh sách repo từ khoipa.txt:', error);
+            // Fallback nếu không tải được file
+            allRepos = [
+                "https://repository.apptesters.org",
+                "https://appstore.sidelix.vip/repos/esign.php",
+                "https://ipa.thuthuatjb.com/repo",
+                "http://ittza7aa.com/repo.json",
+                "https://ipa.cypwn.xyz/cypwn.json",
+                "https://fastsign.dev/repo.json",
+                "https://api.unkeyapp.com/v1/application/source.json"
+            ];
+            renderRepoList(allRepos);
+        }
+    }
 
     // ── Tab Navigation ──
     const pages = { appsPage: document.getElementById('appsPage'), reposPage: document.getElementById('reposPage') };
@@ -106,33 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             repoListEl.appendChild(div);
         });
-    }
-
-    // ── Load Repos (Apple list style) ──
-    async function loadRepos() {
-        // Nếu đã có repos nhúng sẵn từ build (môi trường tĩnh)
-        if (allRepos.length > 0) {
-            renderRepoList(allRepos);
-            return;
-        }
-        try {
-            const response = await fetch('/api/repos');
-            const repos = await response.json();
-            renderRepoList(repos);
-        } catch (error) {
-            console.error('Lỗi tải danh sách repo:', error);
-            // Fallback nếu chạy tĩnh hoàn toàn mà chưa được build nhúng sẵn
-            allRepos = [
-                "https://repository.apptesters.org",
-                "https://appstore.sidelix.vip/repos/esign.php",
-                "https://ipa.thuthuatjb.com/repo",
-                "http://ittza7aa.com/repo.json",
-                "https://ipa.cypwn.xyz/cypwn.json",
-                "https://fastsign.dev/repo.json",
-                "https://api.unkeyapp.com/v1/application/source.json"
-            ];
-            renderRepoList(allRepos);
-        }
     }
 
     function switchTab(pageId) {
