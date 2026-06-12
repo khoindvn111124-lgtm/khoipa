@@ -108,14 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="repo-name">${shortName}</div>
                     <div class="repo-url">${repo}</div>
                 </div>
-                <button class="add-source-btn" title="Thêm nguồn vào ESign/Feather/KSign" onclick="event.stopPropagation(); window._openAddSourceModal('${repo.replace(/'/g, "\\'")}')">
-                    <i class="bi bi-plus-circle-fill"></i>
-                </button>
-                <div class="repo-count" style="margin-left: 8px;"><i class="bi bi-chevron-right"></i></div>
+                <div class="repo-count" style="margin-left: 8px;"><i class="bi bi-plus-circle-fill" style="color: var(--app-blue); font-size: 18px;"></i></div>
             `;
             div.addEventListener('click', () => {
-                switchTab('appsPage');
-                fetchRepoData(repo);
+                window._openAddSourceModal(repo);
             });
             repoListEl.appendChild(div);
         });
@@ -585,6 +581,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'ksign') {
             window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'gbox') {
+            window.location.href = `gbox://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'copy') {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(repoUrl).then(() => {
