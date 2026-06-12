@@ -388,8 +388,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const buttonHtml = downloadUrl 
                 ? `<button class="get-btn" onclick="event.stopPropagation(); window._openInstallModal('${cleanName.replace(/'/g, "\\'")}', '${downloadUrl.replace(/'/g, "\\'")}')">NHẬN</button>`
                 : '';
-                cleanDesc = cleanDesc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
-            }
 
             item.innerHTML = `
                 ${iconUrl ? `<img src="${iconUrl.replace(/"/g,'&quot;')}" class="app-icon" alt="${cleanName.replace(/"/g,'&quot;')}" loading="lazy" onerror="this.style.display='none'">` : `<div class="app-icon" style="display:flex;align-items:center;justify-content:center;color:#C7C7CC;font-size:24px;"><i class="bi bi-app"></i></div>`}
