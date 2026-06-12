@@ -473,18 +473,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Download IPA trực tiếp ──
-    window._downloadIPA = (downloadUrl, appName) => {
+    window._downloadIPA = async (downloadUrl, appName) => {
         if (!downloadUrl) return;
         
-        // Nếu chạy ở môi trường local có server node.js, dùng API download proxy để ép tải file
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
-            window.location.href = `/api/download-ipa?url=${encodeURIComponent(downloadUrl)}&name=${encodeURIComponent(cleanName)}`;
-        } else {
-            // Trên Cloudflare Pages (production), chuyển hướng trực tiếp tab hiện tại tới link IPA.
-            // iOS Safari sẽ tự động nhận diện file .ipa và hiện popup hỏi "Bạn có muốn tải về..."
-            window.location.href = downloadUrl;
-        }
+        const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
+        
+        // Dùng API download proxy để ép tải file (server.js sẽ stream file và set Content-Disposition)
+        window.location.href = `/api/download-ipa?url=${encodeURIComponent(downloadUrl)}&name=${encodeURIComponent(cleanName)}`;
     };
 
     // ── Install Modal (giữ lại cho nguồn repo) ──
@@ -510,13 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (target === 'ksign') {
             window.location.href = `ksign://install?url=${encodeURIComponent(downloadUrl)}`;
         } else if (target === 'direct') {
-            // Tải trực tiếp file IPA về máy
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = '';
-            a.target = '_blank';
-            a.rel = 'noopener';
-            a.click();
+            // Tải trực tiếp file IPA về máy qua proxy để đảm bảo trình duyệt hiện popup tải về
+            window._downloadIPA(downloadUrl, _installData.appName);
         }
         window._closeInstallModal();
     };
