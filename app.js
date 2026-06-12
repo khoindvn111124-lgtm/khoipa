@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentPage = 1;
     const PAGE_SIZE = 50;
-    let filteredAppsList = [];
+    let serverTotalApps = 0;
+    let serverTotalPages = 0;
+    let currentSearchTerm = '';
 
     // Tự động xác định API endpoint hoặc CORS proxy tùy theo môi trường
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -152,73 +154,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // ── Fetch All Repos (chỉ 1 link /repo.json đã gộp sẵn) ──
+    // ── Fetch All Repos (gọi API phân trang từ server) ──
     async function fetchAllRepos() {
         const loadingTextEl = document.getElementById('loadingText');
         const progressContainer = document.getElementById('progressContainer');
         const progressBar = document.getElementById('progressBar');
-        if (currentApps.length === 0) {
-            loadingEl.style.display = 'flex';
-            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải... 0%';
-            if (progressContainer) { progressContainer.style.display = 'block'; progressBar.style.width = '0%'; }
-        }
+        
+        loadingEl.style.display = 'flex';
+        if (loadingTextEl) loadingTextEl.textContent = 'Đang tải...';
+        if (progressContainer) { progressContainer.style.display = 'block'; progressBar.style.width = '30%'; }
+        
         errorEl.classList.add('d-none');
         emptyStateEl.classList.add('d-none');
+        appListEl.innerHTML = '';
         
-        if (currentApps.length === 0) {
-            appListEl.innerHTML = '';
-        }
         headerTitle.textContent = 'Tất cả';
         headerSubtitle.textContent = 'Đang tải...';
         appsSectionTitle.classList.add('d-none');
 
         try {
-            const response = await fetch('/repo.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            // Đọc stream để hiển thị % tải
-            const contentLength = response.headers.get('content-length');
-            let data;
-            if (!contentLength || !response.body) {
-                data = await response.json();
-                if (loadingTextEl) loadingTextEl.textContent = 'Đang xử lý...';
-            } else {
-                const total = parseInt(contentLength, 10);
-                const reader = response.body.getReader();
-                const chunks = [];
-                let loaded = 0;
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    loaded += value.length;
-                    const percent = Math.min(Math.round((loaded / total) * 100), 99);
-                    if (loadingTextEl) loadingTextEl.textContent = `Đang tải... ${percent}%`;
-                    if (progressBar) progressBar.style.width = percent + '%';
-                }
-                if (loadingTextEl) loadingTextEl.textContent = 'Đang xử lý...';
-                // Ghép chunks
-                const allBytes = new Uint8Array(loaded);
-                let pos = 0;
-                for (const chunk of chunks) { allBytes.set(chunk, pos); pos += chunk.length; }
-                const text = new TextDecoder('utf-8').decode(allBytes);
-                data = JSON.parse(text);
+            // Xây dựng URL API phân trang
+            const url = new URL('/repo.json', window.location.origin);
+            url.searchParams.set('page', currentPage);
+            url.searchParams.set('size', PAGE_SIZE);
+            if (activeCategory && activeCategory !== 'all') {
+                url.searchParams.set('category', activeCategory);
+            }
+            if (currentSearchTerm) {
+                url.searchParams.set('search', currentSearchTerm);
             }
 
+            if (progressContainer) progressBar.style.width = '60%';
+
+            const response = await fetch(url.toString());
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            if (progressContainer) progressBar.style.width = '90%';
+
+            const data = await response.json();
             const apps = data.apps && Array.isArray(data.apps) ? data.apps : [];
             currentApps = apps;
 
-            // Sắp xếp theo ngày mới nhất lên đầu
-            currentApps.sort((a, b) => {
-                const dateA = getAppDate(a);
-                const dateB = getAppDate(b);
-                if (dateA !== dateB) return dateB - dateA;
-                return (a.name || '').localeCompare(b.name || '');
-            });
+            // Lấy metadata phân trang từ server
+            if (data.pagination) {
+                serverTotalApps = data.pagination.totalApps;
+                serverTotalPages = data.pagination.totalPages;
+            } else {
+                serverTotalApps = apps.length;
+                serverTotalPages = 1;
+            }
 
             appsSectionTitle.classList.remove('d-none');
-            headerSubtitle.textContent = `${apps.length.toLocaleString()} ứng dụng`;
-            redrawApps();
+            
+            // Cập nhật tiêu đề phần ứng dụng
+            if (currentSearchTerm) {
+                appsSectionTitle.textContent = `Kết quả (${serverTotalApps})`;
+                headerSubtitle.textContent = `Tìm thấy ${serverTotalApps.toLocaleString()} ứng dụng`;
+            } else {
+                const catItem = document.querySelector('.category-filter-item.active');
+                const catName = catItem ? catItem.textContent : 'Ứng dụng';
+                appsSectionTitle.textContent = `${catName} (${serverTotalApps})`;
+                headerSubtitle.textContent = `${serverTotalApps.toLocaleString()} ứng dụng`;
+            }
+
+            // Render danh sách ứng dụng (flat = true vì server đã lọc và sắp xếp sẵn)
+            renderApps(currentApps, true);
+            updatePagination(serverTotalPages);
         } catch (error) {
             console.error('Lỗi tải repo.json:', error);
             errorEl.textContent = 'Không thể tải dữ liệu. Vui lòng thử lại.';
@@ -399,12 +400,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.style.cursor = 'pointer';
                 item.addEventListener('click', (e) => {
                     if (e.target.closest('.get-btn')) return;
-                    window._openInstallModal(cleanName, downloadUrl);
+                    // Tải file IPA trực tiếp về máy
+                    window.location.href = downloadUrl;
                 });
             }
             
             const buttonHtml = downloadUrl 
-                ? `<button class="get-btn" onclick="event.stopPropagation(); window._openInstallModal('${cleanName.replace(/'/g, "\\'")}', '${downloadUrl.replace(/'/g, "\\'")}')">NHẬN</button>`
+                ? `<button class="get-btn" onclick="event.stopPropagation(); window.location.href='${downloadUrl.replace(/'/g, "\\'")}'">NHẬN</button>`
                 : '';
 
             item.innerHTML = `
@@ -485,22 +487,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return mb.toFixed(0) + ' MB';
     }
 
-    // ── Redraw with current filter ──
-    function redrawApps() {
-        filteredAppsList = activeCategory === 'all' ? currentApps : currentApps.filter(app => categorizeApp(app) === activeCategory);
-        currentPage = 1;
-        const totalPages = Math.ceil(filteredAppsList.length / PAGE_SIZE);
-        appsSectionTitle.textContent = `${activeCategory === 'all' ? 'Ứng dụng' : document.querySelector('.category-filter-item.active')?.textContent || 'Ứng dụng'} (${filteredAppsList.length})`;
-        renderPage();
-        updatePagination(totalPages);
-    }
-
-    // ── Render current page ──
-    function renderPage() {
-        const startIdx = (currentPage - 1) * PAGE_SIZE;
-        const endIdx = Math.min(startIdx + PAGE_SIZE, filteredAppsList.length);
-        const pageApps = filteredAppsList.slice(startIdx, endIdx);
-        renderApps(pageApps, true);
+    // ── Go to page ──
+    function goToPage(page) {
+        currentPage = page;
+        fetchAllRepos();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ── Update Pagination Controls ──
@@ -517,15 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
         paginationLast.disabled = currentPage === totalPages;
     }
 
-    // ── Go to page ──
-    function goToPage(page) {
-        currentPage = page;
-        const totalPages = Math.ceil(filteredAppsList.length / PAGE_SIZE);
-        renderPage();
-        updatePagination(totalPages);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     // ── Category Filter ──
     document.getElementById('categoryFilterBar').addEventListener('click', (e) => {
         const item = e.target.closest('.category-filter-item');
@@ -534,28 +516,32 @@ document.addEventListener('DOMContentLoaded', () => {
         item.classList.add('active');
         activeCategory = item.dataset.category;
         searchInput.value = '';
-        redrawApps();
+        currentSearchTerm = '';
+        currentPage = 1;
+        fetchAllRepos();
     });
 
     // ── Search ──
+    let searchTimeout = null;
     searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
+        const searchTerm = e.target.value.trim();
         const filterBar = document.getElementById('categoryFilterBar');
-        if (!searchTerm) {
-            filterBar.style.display = 'flex';
-            redrawApps();
-            return;
-        }
-        filterBar.style.display = 'none';
-        filteredAppsList = currentApps.filter(app => 
-            (app.name && app.name.toLowerCase().includes(searchTerm)) || 
-            (app.bundleIdentifier && app.bundleIdentifier.toLowerCase().includes(searchTerm))
-        );
-        currentPage = 1;
-        const totalPages = Math.ceil(filteredAppsList.length / PAGE_SIZE);
-        appsSectionTitle.textContent = `Kết quả (${filteredAppsList.length})`;
-        renderPage();
-        updatePagination(totalPages);
+        
+        // Debounce tìm kiếm để tránh gửi quá nhiều request liên tục lên server
+        if (searchTimeout) clearTimeout(searchTimeout);
+        
+        searchTimeout = setTimeout(() => {
+            currentSearchTerm = searchTerm;
+            currentPage = 1;
+            
+            if (!searchTerm) {
+                filterBar.style.display = 'flex';
+            } else {
+                filterBar.style.display = 'none';
+            }
+            
+            fetchAllRepos();
+        }, 400); // Chờ 400ms sau khi người dùng dừng gõ
     });
 
     // ── Pagination Events ──
@@ -563,8 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
     paginationPrev.addEventListener('click', () => goToPage(currentPage - 1));
     paginationNext.addEventListener('click', () => goToPage(currentPage + 1));
     paginationLast.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredAppsList.length / PAGE_SIZE);
-        goToPage(totalPages);
+        goToPage(serverTotalPages);
     });
 
     // ── Install Modal ──
@@ -656,6 +641,19 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'gbox') {
             window.location.href = `gbox://addsource?url=${encodeURIComponent(repoUrl)}`;
+        }
+    };
+
+    window._copyRepoUrl = () => {
+        const repoUrl = 'https://khoipa.pages.dev/repo.json';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(repoUrl).then(() => {
+                alert('Đã sao chép URL nguồn tổng hợp!');
+            }).catch(() => {
+                alert('URL nguồn: ' + repoUrl);
+            });
+        } else {
+            alert('URL nguồn: ' + repoUrl);
         }
     };
 

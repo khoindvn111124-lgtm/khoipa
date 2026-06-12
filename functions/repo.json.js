@@ -42,12 +42,7 @@ function cleanAndExtractFeatures(desc) {
         }
     }
     
-    // 4. Cắt ngắn lại khoảng 250 ký tự nếu vẫn quá dài
-    desc = desc.trim();
-    if (desc.length > 250) {
-        desc = desc.substring(0, 247) + '...';
-    }
-    return desc;
+    return desc.trim();
 }
 
 export async function onRequest(context) {
@@ -95,15 +90,56 @@ export async function onRequest(context) {
         });
     }
 
-    // Sử dụng Cache API của Cloudflare để lưu kết quả gộp trong 10 phút
-    const cacheKey = new Request(request.url, request);
+    // ── Đọc tham số query cho website (phân trang, tìm kiếm, danh mục) ──
+    const pageParam = urlObj.searchParams.get('page');
+    const sizeParam = urlObj.searchParams.get('size');
+    const searchQuery = urlObj.searchParams.get('search') || '';
+    const categoryParam = urlObj.searchParams.get('category') || '';
+    const isWebRequest = pageParam !== null || sizeParam !== null || searchQuery !== '' || categoryParam !== '';
+
+    const page = Math.max(1, parseInt(pageParam, 10) || 1);
+    const pageSize = Math.min(200, Math.max(1, parseInt(sizeParam, 10) || 50));
+
+    // Cache key gốc (không có tham số) — dùng để lưu toàn bộ dữ liệu đã gộp
+    const baseCacheKey = new Request(urlObj.origin + urlObj.pathname, request);
     const cache = caches.default;
-    let cachedResponse = await cache.match(cacheKey);
-    if (cachedResponse) {
-        return cachedResponse;
+
+    // ── Hàm danh mục (giống y hệt frontend) ──
+    const CATEGORIES = [
+        { key: 'game', rules: /game|play|trò chơi|sport|football|soccer|racing|puzzle|adventure|action|casino|slot|poker|card|chess|board|rpg|mmorpg|battle|fight|war|gun|shoot|zombie|minecraft|roblox|pubg|garena|league|valorant|clash|dragon|hero|quest|dungeon|candy|crush|angry|bird|temple|run|subway|surfer|sonic|mario|pokemon|car|racing|drift/i },
+        { key: 'music', rules: /music|nhạc|audio|sound|beat|melody|tune|song|sing|karaoke|piano|guitar|drum|dj|mix|radio|podcast|spotify|deezer|nhaccuatui|zing|mp3|tone|ring/i },
+        { key: 'video', rules: /video|phim|movie|film|tv|show|anime|netflix|youtube|tiktok|stream|watch|player|cinema|drama|series|clip|reel|shorts|iptv|live|broadcast/i },
+        { key: 'social', rules: /chat|social|message|nhắn|zalo|facebook|messenger|instagram|twitter|telegram|wechat|line|viber|snap|discord|forum|dating|hẹn|meet|call|video call|facetime|whatsapp|tinder|bumble/i },
+        { key: 'photo', rules: /photo|ảnh|camera|selfie|beauty|edit|filter|collage|design|art|draw|paint|photoshop|lightroom|canva|figma|illustrator|procreate|pic|image|gallery|album/i },
+        { key: 'utility', rules: /utility|util|clean|boost|battery|wifi|scan|qr|file|manager|backup|cloud|vpn|proxy|adblock|keyboard|launcher|lock|wallpaper|widget|theme|icon|pack|shortcut|automation|torrent|download|unzip|compress|converter/i },
+        { key: 'productivity', rules: /note|ghi chú|calendar|lịch|remind|nhắc|todo|task|mail|email|office|word|excel|powerpoint|docs|sheet|slide|pdf|scan|print|translate|dịch|ai|assistant|trợ lý|clock|alarm|timer|stopwatch|focus|pomodoro/i },
+        { key: 'health', rules: /health|sức khỏe|fitness|workout|exercise|tập|gym|yoga|medit|sleep|ngủ|run|walk|step|calorie|diet|ăn|water|nước|heart|blood|pressure|period|cycle/i },
+        { key: 'shopping', rules: /shop|mua|bán|store|cửa hàng|market|chợ|lazada|shoppe|tiki|sendo|amazon|ebay|deal|discount|giảm|giá|coupon|voucher|fashion|thời trang|cloth|quần áo|shoe|giày/i },
+        { key: 'education', rules: /education|giáo dục|học|learn|study|school|trường|university|đại học|course|khóa học|quiz|test|exam|thi|book|sách|language|ngôn ngữ|english|tiếng anh|math|toán|science|code|program/i },
+        { key: 'finance', rules: /bank|ngân hàng|finance|tài chính|money|tiền|pay|thanh toán|invest|đầu tư|stock|chứng khoán|crypto|bitcoin|blockchain|wallet|ví|momo|zalopay|vnpay|tax|thuế|budget|expense|chi tiêu/i },
+        { key: 'travel', rules: /travel|du lịch|tour|hotel|khách sạn|flight|vé|bus|xe|taxi|grab|be|map|bản đồ|gps|navigate|đường|guide|hướng dẫn|booking|agoda|airbnb|trip/i },
+        { key: 'books', rules: /book|sách|news|tin tức|báo|magazine|tạp chí|read|đọc|comic|truyện|manga|novel|tiểu thuyết|library|thư viện|rss|feed|blog|article/i },
+        { key: 'food', rules: /food|ăn|đồ ăn|thức uống|drink|nấu|cook|recipe|công thức|restaurant|nhà hàng|order|đặt|delivery|giao|pizza|burger|coffee|cà phê|trà sữa|milk tea/i }
+    ];
+
+    function categorizeApp(app) {
+        const searchText = `${app.name || ''} ${app.bundleIdentifier || ''} ${app.localizedDescription || ''}`.toLowerCase();
+        for (const cat of CATEGORIES) {
+            if (cat.rules.test(searchText)) return cat.key;
+        }
+        return 'other';
     }
 
-    try {
+    // ── Hàm lấy toàn bộ dữ liệu đã gộp (từ cache hoặc fetch mới) ──
+    async function getMergedData() {
+        // Kiểm tra cache gốc trước
+        let cached = await cache.match(baseCacheKey);
+        if (cached) {
+            const data = await cached.json();
+            return data.apps || [];
+        }
+
+        // Fetch và gộp tất cả repo
         // 1. Đọc danh sách repo từ file khoipa.txt tĩnh trên host
         const reposUrl = `${urlObj.origin}/khoipa.txt`;
         const reposResponse = await fetch(reposUrl);
@@ -112,7 +148,6 @@ export async function onRequest(context) {
             const text = await reposResponse.text();
             repos = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         } else {
-            // Fallback nếu không đọc được file khoipa.txt
             repos = [
                 "https://repository.apptesters.org",
                 "https://appstore.sidelix.vip/repos/esign.php",
@@ -133,7 +168,7 @@ export async function onRequest(context) {
         const fetchPromises = repos.map(async (repoUrl) => {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout 8 giây cho mỗi repo để tránh treo lâu
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 const response = await fetch(repoUrl, {
                     headers: {
@@ -146,7 +181,7 @@ export async function onRequest(context) {
 
                 if (!response.ok) return;
                 const text = await response.text();
-                if (text.trim().startsWith('<')) return; // Bỏ qua nếu là HTML
+                if (text.trim().startsWith('<')) return;
 
                 const data = JSON.parse(text);
                 let apps = [];
@@ -164,13 +199,12 @@ export async function onRequest(context) {
 
         await Promise.allSettled(fetchPromises);
 
-        // 3. Lọc trùng và giữ lại phiên bản cao nhất, đồng thời tối ưu hóa dung lượng app
+        // 3. Lọc trùng, giữ phiên bản cao nhất
         const uniqueAppsMap = new Map();
         allApps.forEach(app => {
             const key = app.bundleIdentifier || app.bundleID || app.name;
             if (!key) return;
 
-            // Tối ưu hóa đối tượng app để giảm dung lượng file JSON
             const optimizedApp = {
                 name: app.name || 'Ứng dụng',
                 bundleIdentifier: app.bundleIdentifier || app.bundleID || key,
@@ -181,7 +215,6 @@ export async function onRequest(context) {
                 downloadURL: app.downloadURL || app.ipaURL || app.url || app.down || ''
             };
 
-            // Cắt ngắn mô tả vừa phải để tiết kiệm dung lượng nhưng vẫn đủ hiểu tính năng
             let desc = app.localizedDescription || app.description || app.subtitle || '';
             if (desc) {
                 optimizedApp.localizedDescription = cleanAndExtractFeatures(desc);
@@ -201,20 +234,91 @@ export async function onRequest(context) {
 
         const mergedApps = Array.from(uniqueAppsMap.values());
 
-        // 4. Tạo cấu trúc repo.json hoàn chỉnh
-        const repoJson = {
+        // 4. Sắp xếp theo ngày mới nhất lên đầu
+        mergedApps.sort((a, b) => {
+            const getAppDate = (app) => {
+                const dateStr = app.versionDate || '';
+                if (!dateStr) return 0;
+                if (!isNaN(dateStr)) return Number(dateStr);
+                const parsed = Date.parse(dateStr);
+                return isNaN(parsed) ? 0 : parsed;
+            };
+            const dateA = getAppDate(a);
+            const dateB = getAppDate(b);
+            if (dateA !== dateB) return dateB - dateA;
+            return (a.name || '').localeCompare(b.name || '');
+        });
+
+        // 5. Lưu toàn bộ vào cache gốc (12 giờ)
+        const fullRepoJson = {
             name: "Kho IPA Store Tổng Hợp",
             identifier: "com.khoipa.store",
             description: `Kho ứng dụng IPA tổng hợp từ nhiều nguồn, tự động cập nhật và lọc trùng phiên bản mới nhất. Tổng cộng ${mergedApps.length} ứng dụng.`,
             apps: mergedApps
         };
 
-        const finalResponse = new Response(JSON.stringify(repoJson), { headers: corsHeaders });
+        const fullResponse = new Response(JSON.stringify(fullRepoJson), { headers: corsHeaders });
+        context.waitUntil(cache.put(baseCacheKey, fullResponse.clone()));
 
-        // Lưu vào Cloudflare Cache
-        context.waitUntil(cache.put(cacheKey, finalResponse.clone()));
+        return mergedApps;
+    }
 
-        return finalResponse;
+    try {
+        const allMergedApps = await getMergedData();
+
+        // Nếu là request từ website (có tham số phân trang/tìm kiếm/danh mục)
+        if (isWebRequest) {
+            let filteredApps = allMergedApps;
+
+            // Lọc theo danh mục
+            if (categoryParam && categoryParam !== 'all') {
+                filteredApps = filteredApps.filter(app => categorizeApp(app) === categoryParam);
+            }
+
+            // Lọc theo từ khóa tìm kiếm
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filteredApps = filteredApps.filter(app =>
+                    (app.name && app.name.toLowerCase().includes(q)) ||
+                    (app.bundleIdentifier && app.bundleIdentifier.toLowerCase().includes(q))
+                );
+            }
+
+            const totalApps = filteredApps.length;
+            const totalPages = Math.ceil(totalApps / pageSize);
+            const startIdx = (page - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, totalApps);
+            const pageApps = filteredApps.slice(startIdx, endIdx);
+
+            const paginatedResponse = {
+                name: "Kho IPA Store Tổng Hợp",
+                identifier: "com.khoipa.store",
+                description: `Kho ứng dụng IPA tổng hợp từ nhiều nguồn.`,
+                apps: pageApps,
+                // Metadata phân trang
+                pagination: {
+                    page: page,
+                    pageSize: pageSize,
+                    totalApps: totalApps,
+                    totalPages: totalPages,
+                    hasMore: page < totalPages
+                },
+                category: categoryParam || 'all',
+                search: searchQuery || ''
+            };
+
+            return new Response(JSON.stringify(paginatedResponse), { headers: corsHeaders });
+        }
+
+        // Nếu là request đầy đủ (ESign, KSign, Feather, GBox...)
+        const fullRepoJson = {
+            name: "Kho IPA Store Tổng Hợp",
+            identifier: "com.khoipa.store",
+            description: `Kho ứng dụng IPA tổng hợp từ nhiều nguồn, tự động cập nhật và lọc trùng phiên bản mới nhất. Tổng cộng ${allMergedApps.length} ứng dụng.`,
+            apps: allMergedApps
+        };
+
+        return new Response(JSON.stringify(fullRepoJson), { headers: corsHeaders });
 
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {

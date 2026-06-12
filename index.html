@@ -182,9 +182,11 @@
             color: #fff;
             border: none;
             cursor: pointer;
+            text-decoration: none;
             transition: transform 0.1s ease, opacity 0.1s ease;
             flex-shrink: 0;
         }
+        .quick-add-btn:hover { color: #fff; text-decoration: none; }
         .quick-add-btn:active { transform: scale(0.94); opacity: 0.85; }
         .quick-add-btn.esign { background: linear-gradient(135deg, #007AFF, #5856D6); }
         .quick-add-btn.ksign { background: linear-gradient(135deg, #FF9500, #FF6B00); }
@@ -761,17 +763,20 @@
         </div>
         <!-- Quick Add Source Buttons -->
         <div class="quick-add-source">
-            <button class="quick-add-btn esign" onclick="window._quickAddSource('esign')">
+            <a href="esign://addsource?url=https%3A%2F%2Fkhoipa.pages.dev%2Frepo.json" class="quick-add-btn esign">
                 <i class="bi bi-pen-fill"></i> ESign
-            </button>
-            <button class="quick-add-btn ksign" onclick="window._quickAddSource('ksign')">
+            </a>
+            <a href="ksign://addsource?url=https%3A%2F%2Fkhoipa.pages.dev%2Frepo.json" class="quick-add-btn ksign">
                 <i class="bi bi-pencil-square"></i> KSign
-            </button>
-            <button class="quick-add-btn gbox" onclick="window._quickAddSource('gbox')">
+            </a>
+            <a href="gbox://addsource?url=https%3A%2F%2Fkhoipa.pages.dev%2Frepo.json" class="quick-add-btn gbox">
                 <i class="bi bi-box-seam-fill"></i> GBox
-            </button>
-            <button class="quick-add-btn feather" onclick="window._quickAddSource('feather')">
+            </a>
+            <a href="feather://addsource?url=https%3A%2F%2Fkhoipa.pages.dev%2Frepo.json" class="quick-add-btn feather">
                 <i class="bi bi-feather"></i> Feather
+            </a>
+            <button class="quick-add-btn copy" onclick="window._copyRepoUrl()" style="background: linear-gradient(135deg, #8E8E93, #636366);">
+                <i class="bi bi-clipboard"></i> Sao chép
             </button>
         </div>
     </div>
