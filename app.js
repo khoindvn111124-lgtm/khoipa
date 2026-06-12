@@ -164,12 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // ── Fetch All Repos ──
+    // ── Fetch All Repos (chỉ 1 link /repo.json đã gộp sẵn) ──
     async function fetchAllRepos() {
         const loadingTextEl = document.getElementById('loadingText');
         if (currentApps.length === 0) {
             loadingEl.style.display = 'flex';
-            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải... (0%)';
+            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải...';
         }
         errorEl.classList.add('d-none');
         emptyStateEl.classList.add('d-none');
@@ -178,95 +178,36 @@ document.addEventListener('DOMContentLoaded', () => {
             appListEl.innerHTML = '';
         }
         headerTitle.textContent = 'Tất cả';
-        headerSubtitle.textContent = 'Đang tải... (0%)';
+        headerSubtitle.textContent = 'Đang tải...';
         appsSectionTitle.classList.add('d-none');
 
-        const allApps = [];
-        allRepoNamesCache = [];
-        let completedCount = 0;
-        const totalRepos = allRepos.length;
+        try {
+            const response = await fetch('/repo.json');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
 
-        // Hàm cập nhật và vẽ lại giao diện ngay khi có dữ liệu mới (Incremental Render)
-        const updateAndRedraw = () => {
-            // Lọc trùng
-            const uniqueAppsMap = new Map();
-            allApps.forEach(app => {
-                const key = app.bundleIdentifier || app.bundleID || app.name;
-                if (!key) return;
-                const existing = uniqueAppsMap.get(key);
-                if (!existing) { uniqueAppsMap.set(key, app); }
-                else if (compareVersions(app.version || '0', existing.version || '0') > 0) { uniqueAppsMap.set(key, app); }
-            });
-            currentApps = Array.from(uniqueAppsMap.values());
+            const apps = data.apps && Array.isArray(data.apps) ? data.apps : [];
+            currentApps = apps;
 
             // Sắp xếp theo ngày mới nhất lên đầu
             currentApps.sort((a, b) => {
                 const dateA = getAppDate(a);
                 const dateB = getAppDate(b);
-                if (dateA !== dateB) {
-                    return dateB - dateA;
-                }
+                if (dateA !== dateB) return dateB - dateA;
                 return (a.name || '').localeCompare(b.name || '');
             });
 
             appsSectionTitle.classList.remove('d-none');
+            headerSubtitle.textContent = `${apps.length.toLocaleString()} ứng dụng`;
             redrawApps();
-
-            // Ẩn spinner loading ngay khi có ứng dụng đầu tiên hiển thị
-            if (currentApps.length > 0) {
-                hideLoading();
-            }
-        };
-
-        // Tải song song tất cả các repo cùng lúc
-        const fetchPromises = allRepos.map(async (repoUrl) => {
-            try {
-                // Giảm timeout xuống 10 giây để tránh bị nghẽn bởi repo chậm
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const data = await fetchRepoDataFromUrl(repoUrl, controller.signal);
-                clearTimeout(timeoutId);
-
-                let apps = [];
-                if (data.apps && Array.isArray(data.apps)) apps = data.apps;
-                else if (data.packages && Array.isArray(data.packages)) apps = data.packages;
-                else if (Array.isArray(data)) apps = data;
-                
-                if (apps.length > 0) {
-                    const mappedApps = apps.map(app => ({ ...app, _repo: repoUrl, _repoName: data.name || repoUrl }));
-                    allApps.push(...mappedApps);
-                    allRepoNamesCache.push(data.name || repoUrl);
-                    
-                    // Vẽ lại giao diện ngay lập tức khi repo này tải xong thành công
-                    updateAndRedraw();
-                }
-            } catch (error) {
-                console.warn(`Bỏ qua ${repoUrl} do lỗi:`, error.message || error);
-            } finally {
-                completedCount++;
-                const percent = Math.round((completedCount / totalRepos) * 100);
-                if (loadingTextEl) {
-                    loadingTextEl.textContent = `Đang tải... (${percent}%)`;
-                }
-                // Cập nhật tiến trình lên subtitle của header
-                headerSubtitle.textContent = `Đang tải... (${percent}%)`;
-            }
-        });
-
-        await Promise.allSettled(fetchPromises);
-
-        // Đảm bảo vẽ lại lần cuối cùng sau khi tất cả các repo đã hoàn thành (hoặc lỗi)
-        updateAndRedraw();
-        hideLoading();
-        
-        // Hiển thị thông báo hoàn tất rồi tự ẩn sau 3 giây
-        headerSubtitle.textContent = `Đã tải xong ${totalRepos}/${totalRepos} nguồn`;
-        setTimeout(() => {
-            if (headerSubtitle.textContent.startsWith('Đã tải xong')) {
-                headerSubtitle.textContent = '';
-            }
-        }, 3000);
+        } catch (error) {
+            console.error('Lỗi tải repo.json:', error);
+            errorEl.textContent = 'Không thể tải dữ liệu. Vui lòng thử lại.';
+            errorEl.classList.remove('d-none');
+            headerSubtitle.textContent = '';
+        } finally {
+            hideLoading();
+        }
     }
 
     // ── Fetch Single Repo ──
