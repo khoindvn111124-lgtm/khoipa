@@ -95,7 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="repo-name">${shortName}</div>
                     <div class="repo-url">${repo}</div>
                 </div>
-                <div class="repo-count"><i class="bi bi-chevron-right"></i></div>
+                <button class="add-source-btn" title="Thêm nguồn vào ESign/Feather/KSign" onclick="event.stopPropagation(); window._openAddSourceModal('${repo.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </button>
+                <div class="repo-count" style="margin-left: 8px;"><i class="bi bi-chevron-right"></i></div>
             `;
             div.addEventListener('click', () => {
                 switchTab('appsPage');
@@ -363,30 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const item = document.createElement('div');
             item.className = 'app-list-item';
-            
-            // Hàm thực hiện tải trực tiếp file IPA bằng cách tạo thẻ iframe ẩn hoặc thẻ a ẩn
-            const triggerDownload = (url) => {
-                if (!url) return;
-                const link = document.createElement('a');
-                link.href = url;
-                // Đặt thuộc tính download để trình duyệt cố gắng tải xuống thay vì mở tab mới
-                link.setAttribute('download', '');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-
-            if (downloadUrl) {
-                item.style.cursor = 'pointer';
-                item.addEventListener('click', (e) => {
-                    if (e.target.closest('.get-btn')) return;
-                    triggerDownload(downloadUrl);
-                });
-            }
-            
-            const buttonHtml = downloadUrl 
-                ? `<button class="get-btn" onclick="event.stopPropagation(); window.location.href='${downloadUrl.replace(/'/g, "\\'")}'">NHẬN</button>`
-                : '';
 
             // Ẩn chữ "unkeyapp" hoặc "unkey" khỏi tên ứng dụng và mô tả nếu có
             let cleanName = app.name || 'Không tên';
@@ -395,6 +374,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let cleanDesc = description;
             if (cleanDesc) {
+                cleanDesc = cleanDesc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
+            }
+
+            if (downloadUrl) {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.get-btn')) return;
+                    window._openInstallModal(cleanName, downloadUrl);
+                });
+            }
+            
+            const buttonHtml = downloadUrl 
+                ? `<button class="get-btn" onclick="event.stopPropagation(); window._openInstallModal('${cleanName.replace(/'/g, "\\'")}', '${downloadUrl.replace(/'/g, "\\'")}')">NHẬN</button>`
+                : '';
                 cleanDesc = cleanDesc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
             }
 
@@ -551,6 +544,82 @@ document.addEventListener('DOMContentLoaded', () => {
     paginationLast.addEventListener('click', () => {
         const totalPages = Math.ceil(filteredAppsList.length / PAGE_SIZE);
         goToPage(totalPages);
+    });
+
+    // ── Install Modal ──
+    let _installData = null;
+    window._openInstallModal = (appName, downloadUrl) => {
+        _installData = { appName, downloadUrl };
+        document.getElementById('installModalAppName').textContent = appName;
+        document.getElementById('installModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window._closeInstallModal = () => {
+        document.getElementById('installModal').classList.remove('active');
+        document.body.style.overflow = '';
+        _installData = null;
+    };
+    window._installAction = (target) => {
+        if (!_installData) return;
+        const { downloadUrl } = _installData;
+        if (target === 'esign') {
+            window.location.href = `esign://install?url=${encodeURIComponent(downloadUrl)}`;
+        } else if (target === 'feather') {
+            window.location.href = `feather://install?url=${encodeURIComponent(downloadUrl)}`;
+        } else if (target === 'ksign') {
+            window.location.href = `ksign://install?url=${encodeURIComponent(downloadUrl)}`;
+        }
+        window._closeInstallModal();
+    };
+    
+    // Close install modal on overlay click
+    document.getElementById('installModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            window._closeInstallModal();
+        }
+    });
+
+    // ── Add Source Modal ──
+    let _addSourceUrl = null;
+    window._openAddSourceModal = (repoUrl) => {
+        _addSourceUrl = repoUrl;
+        document.getElementById('addSourceModalUrl').textContent = repoUrl;
+        document.getElementById('addSourceModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window._closeAddSourceModal = () => {
+        document.getElementById('addSourceModal').classList.remove('active');
+        document.body.style.overflow = '';
+        _addSourceUrl = null;
+    };
+    window._addSourceAction = (target) => {
+        if (!_addSourceUrl) return;
+        const repoUrl = _addSourceUrl;
+        if (target === 'esign') {
+            window.location.href = `esign://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'feather') {
+            window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'ksign') {
+            window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'copy') {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(repoUrl).then(() => {
+                    alert('Đã sao chép URL nguồn!');
+                }).catch(() => {
+                    alert('URL nguồn: ' + repoUrl);
+                });
+            } else {
+                alert('URL nguồn: ' + repoUrl);
+            }
+        }
+        window._closeAddSourceModal();
+    };
+    
+    // Close add source modal on overlay click
+    document.getElementById('addSourceModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            window._closeAddSourceModal();
+        }
     });
 
     // ── Init ──
