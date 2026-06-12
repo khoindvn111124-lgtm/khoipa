@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
         "https://api.unkeyapp.com/v1/application/source.json",
         "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
         "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
-        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json"
+        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json",
+        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtk.json"
     ];
     let allRepoNamesCache = [];
     let activeCategory = 'all';
@@ -165,8 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Fetch All Repos ──
     async function fetchAllRepos() {
+        const loadingTextEl = document.getElementById('loadingText');
         if (currentApps.length === 0) {
             loadingEl.style.display = 'flex';
+            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải... (0%)';
         }
         errorEl.classList.add('d-none');
         emptyStateEl.classList.add('d-none');
@@ -180,6 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const allApps = [];
         allRepoNamesCache = [];
+        let completedCount = 0;
+        const totalRepos = allRepos.length;
 
         // Tải song song tất cả các repo cùng lúc bằng Promise.allSettled
         const fetchPromises = allRepos.map(async (repoUrl) => {
@@ -203,6 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.warn(`Bỏ qua ${repoUrl} do lỗi:`, error.message || error);
+            } finally {
+                completedCount++;
+                const percent = Math.round((completedCount / totalRepos) * 100);
+                if (loadingTextEl && currentApps.length === 0) {
+                    loadingTextEl.textContent = `Đang tải... (${percent}%)`;
+                }
             }
         });
 
