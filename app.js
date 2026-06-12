@@ -23,7 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
         "http://ittza7aa.com/repo.json",
         "https://ipa.cypwn.xyz/cypwn.json",
         "https://fastsign.dev/repo.json",
-        "https://api.unkeyapp.com/v1/application/source.json"
+        "https://api.unkeyapp.com/v1/application/source.json",
+        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
+        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
+        "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json"
     ];
     let allRepoNamesCache = [];
     let activeCategory = 'all';
