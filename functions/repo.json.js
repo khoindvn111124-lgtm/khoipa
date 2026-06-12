@@ -1,16 +1,39 @@
 export async function onRequest(context) {
-    const { request } = context;
+    const { request, env } = context;
     
-    // Cache 12 giờ (43200s). Thêm ?update=true để ép buộc cập nhật ngay
     const urlObj = new URL(request.url);
     const forceUpdate = urlObj.searchParams.get('update') === 'true';
     const cacheKey = new Request(request.url, request);
     const cache = caches.default;
+
+    // 1. Kiểm tra Cloudflare CDN Cache trước (Không tốn request KV)
     let cachedResponse = !forceUpdate ? await cache.match(cacheKey) : null;
     if (cachedResponse) {
         return cachedResponse;
     }
 
+    // 2. Nếu không có CDN Cache, thử đọc từ Cloudflare KV
+    if (env.KHOIPA_KV) {
+        try {
+            const kvData = await env.KHOIPA_KV.get('repo_json');
+            if (kvData) {
+                const response = new Response(kvData, {
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*',
+                        'Cache-Control': 'public, max-age=43200' // Cho phép Cloudflare CDN cache lại trong 12 giờ
+                    }
+                });
+                // Lưu vào CDN Cache để các request sau không cần đọc KV nữa
+                context.waitUntil(cache.put(cacheKey, response.clone()));
+                return response;
+            }
+        } catch (kvError) {
+            console.error('Lỗi đọc từ KV:', kvError.message);
+        }
+    }
+
+    // 3. Fallback nếu không có KV hoặc KV trống: Tự động fetch trực tiếp (như cũ)
     try {
         // 1. Lấy danh sách repo từ khoipa.txt
         const reposUrl = new URL('/khoipa.txt', request.url);
