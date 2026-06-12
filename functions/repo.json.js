@@ -1,10 +1,12 @@
 export async function onRequest(context) {
     const { request } = context;
     
-    // Cấu hình Cache API của Cloudflare để lưu trữ kết quả repo.json trong 10 phút
+    // Cache 12 giờ (43200s). Thêm ?update=true để ép buộc cập nhật ngay
+    const urlObj = new URL(request.url);
+    const forceUpdate = urlObj.searchParams.get('update') === 'true';
     const cacheKey = new Request(request.url, request);
     const cache = caches.default;
-    let cachedResponse = await cache.match(cacheKey);
+    let cachedResponse = !forceUpdate ? await cache.match(cacheKey) : null;
     if (cachedResponse) {
         return cachedResponse;
     }
@@ -113,7 +115,7 @@ export async function onRequest(context) {
             headers: {
                 'Content-Type': 'application/json; charset=utf-8',
                 'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age=600' // Cache 10 phút
+                'Cache-Control': 'public, max-age=43200' // Cache 12 giờ
             }
         });
 
