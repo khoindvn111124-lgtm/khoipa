@@ -17,12 +17,13 @@ const compareVersions = (v1, v2) => {
 export async function onRequest(context) {
     const { request, env } = context;
     const urlObj = new URL(request.url);
+    const isPing = urlObj.searchParams.get('ping') === 'true';
 
     // Cấu hình CORS headers
     const corsHeaders = {
         'Content-Type': 'application/json; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Cache-Control': 'public, max-age=600' // Cache 10 phút ở phía client và Cloudflare Edge
     };
@@ -31,9 +32,30 @@ export async function onRequest(context) {
         return new Response(null, {
             headers: {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
                 'Access-Control-Allow-Headers': 'Content-Type'
             }
+        });
+    }
+
+    // Nếu chỉ là ping để giữ cache hoặc kiểm tra, trả về phản hồi cực ngắn để tránh quá tải dung lượng
+    if (isPing || request.method === 'HEAD') {
+        // Vẫn chạy ngầm việc cập nhật cache nếu cần
+        const cacheKey = new Request(urlObj.origin + urlObj.pathname, request);
+        const cache = caches.default;
+        
+        // Kích hoạt fetch ngầm để cập nhật cache nếu cache hết hạn
+        context.waitUntil(
+            cache.match(cacheKey).then(async (cached) => {
+                if (!cached) {
+                    // Tự gọi hàm gộp để ghi vào cache
+                    await fetch(urlObj.origin + urlObj.pathname);
+                }
+            })
+        );
+
+        return new Response(JSON.stringify({ status: "OK", message: "Ping thành công, cache đang được cập nhật ngầm!" }), {
+            headers: corsHeaders
         });
     }
 
