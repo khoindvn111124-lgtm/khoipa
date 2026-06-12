@@ -1,0 +1,16 @@
+name: Cập nhật repo.json tự động mỗi 12 giờ
+
+on:
+  schedule:
+    # Chạy lúc 0:00 và 12:00 UTC mỗi ngày
+    - cron: '0 0,12 * * *'
+  # Cho phép chạy thủ công để test
+  workflow_dispatch:
+
+jobs:
+  update-repo-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping repo.json để Cloudflare cập nhật cache
+        run: |
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" "https://${{ secrets.CF_DOMAIN }}/repo.json?update=true"
