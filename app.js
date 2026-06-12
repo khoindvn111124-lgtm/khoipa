@@ -320,13 +320,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.style.cursor = 'pointer';
                 item.addEventListener('click', (e) => {
                     if (e.target.closest('.get-btn')) return;
-                    // Mở modal cài đặt thay vì tải trực tiếp file IPA về máy (vì iOS không cài trực tiếp được)
-                    window._openInstallModal(cleanName, downloadUrl);
+                    // Tải trực tiếp file IPA về máy
+                    window._downloadIPA(downloadUrl, cleanName);
                 });
             }
             
             const buttonHtml = downloadUrl 
-                ? `<button class="get-btn" onclick="event.stopPropagation(); window._openInstallModal('${cleanName.replace(/'/g, "\\'")}', '${downloadUrl.replace(/'/g, "\\'")}')">NHẬN</button>`
+                ? `<button class="get-btn" onclick="event.stopPropagation(); window._downloadIPA('${downloadUrl.replace(/'/g, "\\'")}', '${cleanName.replace(/'/g, "\\'")}')">NHẬN</button>`
                 : '';
 
             item.innerHTML = `
@@ -472,7 +472,22 @@ document.addEventListener('DOMContentLoaded', () => {
         goToPage(serverTotalPages);
     });
 
-    // ── Install Modal ──
+    // ── Download IPA trực tiếp ──
+    window._downloadIPA = (downloadUrl, appName) => {
+        if (!downloadUrl) return;
+        
+        // Nếu chạy ở môi trường local có server node.js, dùng API download proxy để ép tải file
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
+            window.location.href = `/api/download-ipa?url=${encodeURIComponent(downloadUrl)}&name=${encodeURIComponent(cleanName)}`;
+        } else {
+            // Trên Cloudflare Pages (production), chuyển hướng trực tiếp tab hiện tại tới link IPA.
+            // iOS Safari sẽ tự động nhận diện file .ipa và hiện popup hỏi "Bạn có muốn tải về..."
+            window.location.href = downloadUrl;
+        }
+    };
+
+    // ── Install Modal (giữ lại cho nguồn repo) ──
     let _installData = null;
     window._openInstallModal = (appName, downloadUrl) => {
         _installData = { appName, downloadUrl };
@@ -494,6 +509,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = `feather://install?url=${encodeURIComponent(downloadUrl)}`;
         } else if (target === 'ksign') {
             window.location.href = `ksign://install?url=${encodeURIComponent(downloadUrl)}`;
+        } else if (target === 'direct') {
+            // Tải trực tiếp file IPA về máy
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = '';
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.click();
         }
         window._closeInstallModal();
     };
@@ -524,11 +547,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target === 'esign') {
             window.location.href = `esign://addsource?url=${repoUrl}`;
         } else if (target === 'feather') {
-            window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `feather://addsource?url=${repoUrl}`;
         } else if (target === 'ksign') {
-            window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `ksign://addsource?url=${repoUrl}`;
         } else if (target === 'gbox') {
-            window.location.href = `gbox://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `gbox://addsource?url=${repoUrl}`;
         } else if (target === 'copy') {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(repoUrl).then(() => {
@@ -556,11 +579,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target === 'esign') {
             window.location.href = `esign://addsource?url=${repoUrl}`;
         } else if (target === 'feather') {
-            window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `feather://addsource?url=${repoUrl}`;
         } else if (target === 'ksign') {
-            window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `ksign://addsource?url=${repoUrl}`;
         } else if (target === 'gbox') {
-            window.location.href = `gbox://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `gbox://addsource?url=${repoUrl}`;
         }
     };
 

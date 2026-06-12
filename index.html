@@ -764,16 +764,16 @@
         </div>
         <!-- Quick Add Source Buttons -->
         <div class="quick-add-source">
-            <a href="#" onclick="window._quickAddSource('esign'); return false;" class="quick-add-btn esign">
+            <a href="javascript:void(0)" onclick="window._quickAddSource('esign')" class="quick-add-btn esign">
                 <i class="bi bi-pen-fill"></i> ESign
             </a>
-            <a href="#" onclick="window._quickAddSource('ksign'); return false;" class="quick-add-btn ksign">
+            <a href="javascript:void(0)" onclick="window._quickAddSource('ksign')" class="quick-add-btn ksign">
                 <i class="bi bi-pencil-square"></i> KSign
             </a>
-            <a href="#" onclick="window._quickAddSource('gbox'); return false;" class="quick-add-btn gbox">
+            <a href="javascript:void(0)" onclick="window._quickAddSource('gbox')" class="quick-add-btn gbox">
                 <i class="bi bi-box-seam-fill"></i> GBox
             </a>
-            <a href="#" onclick="window._quickAddSource('feather'); return false;" class="quick-add-btn feather">
+            <a href="javascript:void(0)" onclick="window._quickAddSource('feather')" class="quick-add-btn feather">
                 <i class="bi bi-feather"></i> Feather
             </a>
             <button class="quick-add-btn copy" onclick="window._copyRepoUrl()" style="background: linear-gradient(135deg, #8E8E93, #636366);">
@@ -840,6 +840,14 @@
                 <div class="option-text">
                     <div class="option-label">Cài qua KSign</div>
                     <div class="option-sub">Ký & cài đặt bằng KSign</div>
+                </div>
+                <i class="bi bi-chevron-right option-arrow"></i>
+            </button>
+            <button class="install-option" onclick="window._installAction('direct')">
+                <div class="install-option-icon" style="background: linear-gradient(135deg, #8E8E93, #636366);"><i class="bi bi-download"></i></div>
+                <div class="option-text">
+                    <div class="option-label">Tải trực tiếp IPA</div>
+                    <div class="option-sub">Tải file .ipa về máy</div>
                 </div>
                 <i class="bi bi-chevron-right option-arrow"></i>
             </button>
