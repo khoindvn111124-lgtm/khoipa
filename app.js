@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageId === 'reposPage') {
                 headerTitle.textContent = 'Kho Repo';
                 headerSubtitle.textContent = '';
+            } else if (pageId === 'appsPage') {
+                headerTitle.textContent = 'IPA Store';
+                headerSubtitle.textContent = '';
             }
         });
     });
@@ -422,8 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const list = document.createElement('div');
             list.className = 'category-apps';
 
-            // Sort apps by name within category
-            catApps.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            // Sort apps by date newest first within category, then by name
+            catApps.sort((a, b) => {
+                const dateA = getAppDate(a);
+                const dateB = getAppDate(b);
+                if (dateA !== dateB) return dateB - dateA;
+                return (a.name || '').localeCompare(b.name || '');
+            });
 
             catApps.forEach(app => {
                 const item = buildAppItem(app);

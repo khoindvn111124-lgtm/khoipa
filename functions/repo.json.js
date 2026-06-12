@@ -25,7 +25,7 @@ export async function onRequest(context) {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Cache-Control': 'public, max-age=600' // Cache 10 phút ở phía client và Cloudflare Edge
+        'Cache-Control': 'public, max-age=43200' // Cache 12 giờ ở phía client và Cloudflare Edge
     };
 
     if (request.method === 'OPTIONS') {
@@ -149,8 +149,8 @@ export async function onRequest(context) {
             let desc = app.localizedDescription || app.description || app.subtitle || '';
             if (desc) {
                 desc = desc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
-                if (desc.length > 150) {
-                    desc = desc.substring(0, 147) + '...';
+                if (desc.length > 1000) {
+                    desc = desc.substring(0, 997) + '...';
                 }
                 optimizedApp.localizedDescription = desc;
             }
