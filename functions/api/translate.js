@@ -1,50 +1,48 @@
 export async function onRequest(context) {
     const { request } = context;
     const urlObj = new URL(request.url);
-    const text = urlObj.searchParams.get('q');
+    const text = urlObj.searchParams.get('q') || '';
 
-    if (!text) {
-        return new Response(JSON.stringify({ error: 'Thiếu text' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    const corsHeaders = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'public, max-age=86400' // Cache 1 ngày
+    };
+
+    if (request.method === 'OPTIONS') {
+        return new Response(null, {
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         });
     }
 
-    // Cấu hình Cache API của Cloudflare để lưu trữ kết quả dịch trong 1 ngày (86400 giây)
-    const cacheKey = new Request(request.url, request);
-    const cache = caches.default;
-    let cachedResponse = await cache.match(cacheKey);
-    if (cachedResponse) {
-        return cachedResponse;
+    if (!text) {
+        return new Response(JSON.stringify({ translated: '' }), { headers: corsHeaders });
     }
 
     try {
         const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(text)}`;
-        const response = await fetch(translateUrl);
+        const response = await fetch(translateUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+
         if (!response.ok) {
-            throw new Error('Lỗi Google Translate API');
+            throw new Error(`Google Translate API returned status ${response.status}`);
         }
+
         const data = await response.json();
-        const translated = data[0]?.map(s => s[0]).join('') || text;
+        const translatedText = data[0]?.map(s => s[0]).join('') || text;
 
-        const finalResponse = new Response(JSON.stringify({ original: text, translated }), {
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age=86400' // Cache 1 ngày
-            }
-        });
-
-        // Lưu vào Cloudflare Cache
-        context.waitUntil(cache.put(cacheKey, finalResponse.clone()));
-
-        return finalResponse;
+        return new Response(JSON.stringify({ translated: translatedText }), { headers: corsHeaders });
     } catch (error) {
-        return new Response(JSON.stringify({ original: text, translated: text }), {
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        // Fallback trả về text gốc nếu lỗi
+        return new Response(JSON.stringify({ translated: text, error: error.message }), { headers: corsHeaders });
     }
 }

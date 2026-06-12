@@ -630,9 +630,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Quick Add Source (thêm nguồn tổng hợp https://khoipa.pages.dev/repo.json trực tiếp) ──
+    // ── Quick Add Source (thêm nguồn tổng hợp động theo domain hiện tại) ──
     window._quickAddSource = (target) => {
-        const repoUrl = 'https://khoipa.pages.dev/repo.json';
+        const repoUrl = window.location.origin + '/repo.json';
         if (target === 'esign') {
             window.location.href = `esign://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'feather') {
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window._copyRepoUrl = () => {
-        const repoUrl = 'https://khoipa.pages.dev/repo.json';
+        const repoUrl = window.location.origin + '/repo.json';
         if (navigator.clipboard) {
             navigator.clipboard.writeText(repoUrl).then(() => {
                 alert('Đã sao chép URL nguồn tổng hợp!');
