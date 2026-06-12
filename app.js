@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentApps = [];
     let allRepos = [];
-    let allRepoNamesCache = [];
     let activeCategory = 'all';
     
     let currentPage = 1;
@@ -25,16 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let serverTotalApps = 0;
     let serverTotalPages = 0;
     let currentSearchTerm = '';
-
-    // Tự động xác định API endpoint hoặc CORS proxy tùy theo môi trường
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    
-    // Hàm fetch repo thông minh sử dụng API endpoint của chính domain đang chạy (local hoặc Cloudflare Pages Functions)
-    async function fetchRepoDataFromUrl(repoUrl, signal) {
-        const response = await fetch(`/api/fetch-repo?url=${encodeURIComponent(repoUrl)}`, { signal });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return await response.json();
-    }
 
     const getTranslateUrl = (text) => {
         return `/api/translate?q=${encodeURIComponent(text)}`;
@@ -59,7 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 "http://ittza7aa.com/repo.json",
                 "https://ipa.cypwn.xyz/cypwn.json",
                 "https://fastsign.dev/repo.json",
-                "https://api.unkeyapp.com/v1/application/source.json"
+                "https://api.unkeyapp.com/v1/application/source.json",
+                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
+                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
+                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json",
+                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtk.json"
             ];
             renderRepoList(allRepos);
         }
@@ -120,30 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             repoListEl.appendChild(div);
         });
-    }
-
-    function switchTab(pageId) {
-        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-        const tab = document.querySelector(`.tab-item[data-page="${pageId}"]`);
-        if (tab) tab.classList.add('active');
-        Object.keys(pages).forEach(k => pages[k].classList.remove('active'));
-        pages[pageId].classList.add('active');
-    }
-
-    // ── Version Compare ──
-    function compareVersions(v1, v2) {
-        if (!v1) return -1;
-        if (!v2) return 1;
-        const parts1 = v1.toString().split('.').map(Number);
-        const parts2 = v2.toString().split('.').map(Number);
-        const len = Math.max(parts1.length, parts2.length);
-        for (let i = 0; i < len; i++) {
-            const p1 = parts1[i] || 0;
-            const p2 = parts2[i] || 0;
-            if (p1 > p2) return 1;
-            if (p1 < p2) return -1;
-        }
-        return 0;
     }
 
     function getAppDate(app) {
@@ -230,55 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (progressBar) progressBar.style.width = '100%';
             hideLoading();
         }
-    }
-
-    // ── Fetch Single Repo ──
-    async function fetchRepoData(repoUrl) {
-        if (currentApps.length === 0) {
-            loadingEl.style.display = 'flex';
-        }
-        errorEl.classList.add('d-none');
-        emptyStateEl.classList.add('d-none');
-        if (currentApps.length === 0) {
-            appListEl.innerHTML = '';
-        }
-        headerTitle.textContent = repoUrl.replace(/^https?:\/\//,'').split('/')[0];
-        headerSubtitle.textContent = '';
-        appsSectionTitle.classList.add('d-none');
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000); // Tăng lên 25 giây
-            const data = await fetchRepoDataFromUrl(repoUrl, controller.signal);
-            clearTimeout(timeoutId);
-
-            let apps = [];
-            if (data.apps && Array.isArray(data.apps)) apps = data.apps;
-            else if (data.packages && Array.isArray(data.packages)) apps = data.packages;
-            else if (Array.isArray(data)) apps = data;
-            else throw new Error('Định dạng repo không được hỗ trợ');
-
-            currentApps = apps;
-            headerTitle.textContent = data.name || 'Ứng dụng';
-            headerSubtitle.textContent = '';
-            appsSectionTitle.classList.remove('d-none');
-            redrawApps();
-        } catch (error) {
-            console.error('Lỗi fetch repo:', error);
-            errorEl.textContent = 'Không thể tải dữ liệu từ repo này.';
-            errorEl.classList.remove('d-none');
-            headerTitle.textContent = 'Lỗi';
-            headerSubtitle.textContent = '';
-        } finally {
-            hideLoading();
-        }
-    }
-
-    function showLoading() {
-        appListEl.innerHTML = '';
-        loadingEl.style.display = 'none';
-        errorEl.classList.add('d-none');
-        emptyStateEl.classList.add('d-none');
     }
 
     function hideLoading() {
@@ -602,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!_addSourceUrl) return;
         const repoUrl = _addSourceUrl;
         if (target === 'esign') {
-            window.location.href = `esign://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `esign://addsource?url=${repoUrl}`;
         } else if (target === 'feather') {
             window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'ksign') {
@@ -634,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window._quickAddSource = (target) => {
         const repoUrl = window.location.origin + '/repo.json';
         if (target === 'esign') {
-            window.location.href = `esign://addsource?url=${encodeURIComponent(repoUrl)}`;
+            window.location.href = `esign://addsource?url=${repoUrl}`;
         } else if (target === 'feather') {
             window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
         } else if (target === 'ksign') {

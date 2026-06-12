@@ -79,8 +79,10 @@ export async function onRequest(context) {
         context.waitUntil(
             cache.match(cacheKey).then(async (cached) => {
                 if (!cached) {
-                    // Tự gọi hàm gộp để ghi vào cache
-                    await fetch(urlObj.origin + urlObj.pathname);
+                    // Tự gọi hàm gộp để ghi vào cache, thêm header đặc biệt hoặc query param để tránh đệ quy vô hạn
+                    const updateUrl = new URL(urlObj.origin + urlObj.pathname);
+                    updateUrl.searchParams.set('internal_update', 'true');
+                    await fetch(updateUrl.toString());
                 }
             })
         );
@@ -89,6 +91,9 @@ export async function onRequest(context) {
             headers: corsHeaders
         });
     }
+
+    // Tránh đệ quy vô hạn khi fetch ngầm
+    const isInternalUpdate = urlObj.searchParams.get('internal_update') === 'true';
 
     // ── Đọc tham số query cho website (phân trang, tìm kiếm, danh mục) ──
     const pageParam = urlObj.searchParams.get('page');
