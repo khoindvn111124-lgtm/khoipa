@@ -14,6 +14,42 @@ const compareVersions = (v1, v2) => {
     return 0;
 };
 
+// Hàm lọc và trích xuất tính năng mod/hack thông minh, loại bỏ mô tả gốc rườm rà
+function cleanAndExtractFeatures(desc) {
+    if (!desc) return '';
+    
+    // 1. Loại bỏ các từ khóa rác/quảng cáo của unkey
+    desc = desc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
+    
+    // 2. Loại bỏ các thông tin cấu hình thiết bị rườm rà để tiết kiệm dung lượng
+    desc = desc.replace(/📱\s*Thiết bị xử lý[\s\S]*?AppStore/gi, '');
+    desc = desc.replace(/🔑\s*THÔNG TIN MOD\/HACK[\s\S]*?AppStore/gi, '');
+    desc = desc.replace(/ID ứng dụng:[\s\S]*?Khu giải mã: \S+/gi, '');
+    desc = desc.replace(/🔒\s*THÔNG TIN MOD\/HACK[\s\S]*?AppStore/gi, '');
+    desc = desc.replace(/👉\s*Liên kết AppStore[\s\S]*?$/gi, '');
+    
+    // 3. Nếu có phần "MÔ TẢ ỨNG DỤNG GỐC" hoặc tương tự, hãy cắt bỏ nó đi vì nó rất dài và không cần thiết
+    const originalAppDescIndex = desc.search(/MÔ TẢ ỨNG DỤNG GỐC|Giới thiệu ứng dụng|About this app/i);
+    if (originalAppDescIndex !== -1) {
+        // Tìm xem sau đó có phần tính năng mod không
+        const modFeaturesIndex = desc.search(/TÍNH NĂNG MOD|Tính năng Hack|Mod Features|Tính năng|Mod:|Hack:|Zalo - chạy nền/i);
+        if (modFeaturesIndex > originalAppDescIndex) {
+            // Lấy từ phần tính năng mod trở đi
+            desc = desc.substring(modFeaturesIndex);
+        } else {
+            // Nếu không tìm thấy từ khóa mod rõ ràng, cắt bỏ phần mô tả gốc
+            desc = desc.substring(0, originalAppDescIndex);
+        }
+    }
+    
+    // 4. Cắt ngắn lại khoảng 250 ký tự nếu vẫn quá dài
+    desc = desc.trim();
+    if (desc.length > 250) {
+        desc = desc.substring(0, 247) + '...';
+    }
+    return desc;
+}
+
 export async function onRequest(context) {
     const { request, env } = context;
     const urlObj = new URL(request.url);
@@ -145,14 +181,10 @@ export async function onRequest(context) {
                 downloadURL: app.downloadURL || app.ipaURL || app.url || app.down || ''
             };
 
-            // Cắt ngắn mô tả nếu quá dài để tiết kiệm dung lượng
+            // Cắt ngắn mô tả vừa phải để tiết kiệm dung lượng nhưng vẫn đủ hiểu tính năng
             let desc = app.localizedDescription || app.description || app.subtitle || '';
             if (desc) {
-                desc = desc.replace(/unkeyapp/gi, '').replace(/unkey/gi, '').trim();
-                if (desc.length > 1000) {
-                    desc = desc.substring(0, 997) + '...';
-                }
-                optimizedApp.localizedDescription = desc;
+                optimizedApp.localizedDescription = cleanAndExtractFeatures(desc);
             }
 
             const existing = uniqueAppsMap.get(key);

@@ -155,9 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Fetch All Repos (chỉ 1 link /repo.json đã gộp sẵn) ──
     async function fetchAllRepos() {
         const loadingTextEl = document.getElementById('loadingText');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
         if (currentApps.length === 0) {
             loadingEl.style.display = 'flex';
-            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải...';
+            if (loadingTextEl) loadingTextEl.textContent = 'Đang tải... 0%';
+            if (progressContainer) { progressContainer.style.display = 'block'; progressBar.style.width = '0%'; }
         }
         errorEl.classList.add('d-none');
         emptyStateEl.classList.add('d-none');
@@ -172,7 +175,35 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/repo.json');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
+
+            // Đọc stream để hiển thị % tải
+            const contentLength = response.headers.get('content-length');
+            let data;
+            if (!contentLength || !response.body) {
+                data = await response.json();
+                if (loadingTextEl) loadingTextEl.textContent = 'Đang xử lý...';
+            } else {
+                const total = parseInt(contentLength, 10);
+                const reader = response.body.getReader();
+                const chunks = [];
+                let loaded = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    const percent = Math.min(Math.round((loaded / total) * 100), 99);
+                    if (loadingTextEl) loadingTextEl.textContent = `Đang tải... ${percent}%`;
+                    if (progressBar) progressBar.style.width = percent + '%';
+                }
+                if (loadingTextEl) loadingTextEl.textContent = 'Đang xử lý...';
+                // Ghép chunks
+                const allBytes = new Uint8Array(loaded);
+                let pos = 0;
+                for (const chunk of chunks) { allBytes.set(chunk, pos); pos += chunk.length; }
+                const text = new TextDecoder('utf-8').decode(allBytes);
+                data = JSON.parse(text);
+            }
 
             const apps = data.apps && Array.isArray(data.apps) ? data.apps : [];
             currentApps = apps;
@@ -194,6 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.classList.remove('d-none');
             headerSubtitle.textContent = '';
         } finally {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (progressBar) progressBar.style.width = '100%';
             hideLoading();
         }
     }
@@ -611,6 +644,20 @@ document.addEventListener('DOMContentLoaded', () => {
             window._closeAddSourceModal();
         }
     });
+
+    // ── Quick Add Source (thêm nguồn tổng hợp https://khoipa.pages.dev/repo.json trực tiếp) ──
+    window._quickAddSource = (target) => {
+        const repoUrl = 'https://khoipa.pages.dev/repo.json';
+        if (target === 'esign') {
+            window.location.href = `esign://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'feather') {
+            window.location.href = `feather://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'ksign') {
+            window.location.href = `ksign://addsource?url=${encodeURIComponent(repoUrl)}`;
+        } else if (target === 'gbox') {
+            window.location.href = `gbox://addsource?url=${encodeURIComponent(repoUrl)}`;
+        }
+    };
 
     // ── Init ──
     headerTitle.textContent = 'IPA Store';
