@@ -137,9 +137,10 @@ export async function onRequest(context) {
 
     // ── Hàm lấy toàn bộ dữ liệu đã gộp (từ cache hoặc fetch mới) ──
     async function getMergedData() {
-        // Kiểm tra cache gốc trước
+        // Kiểm tra cache gốc trước (Bỏ qua cache nếu có tham số clear_cache)
+        const clearCache = urlObj.searchParams.get('clear_cache') === 'true';
         let cached = await cache.match(baseCacheKey);
-        if (cached) {
+        if (cached && !clearCache) {
             const data = await cached.json();
             return data.apps || [];
         }
@@ -152,20 +153,10 @@ export async function onRequest(context) {
         if (reposResponse.ok) {
             const text = await reposResponse.text();
             repos = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        } else {
-            repos = [
-                "https://repository.apptesters.org",
-                "https://appstore.sidelix.vip/repos/esign.php",
-                "https://ipa.thuthuatjb.com/repo",
-                "http://ittza7aa.com/repo.json",
-                "https://ipa.cypwn.xyz/cypwn.json",
-                "https://fastsign.dev/repo.json",
-                "https://api.unkeyapp.com/v1/application/source.json",
-                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
-                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
-                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json",
-                "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtk.json"
-            ];
+        }
+
+        if (repos.length === 0) {
+            console.log("Cảnh báo: khoipa.txt trống hoặc không tải được.");
         }
 
         // 2. Fetch song song tất cả các repo
