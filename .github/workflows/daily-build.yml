@@ -20,5 +20,6 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
+          git pull --rebase origin main
           git commit --allow-empty -m "chore: auto rebuild to update repos"
           git push
