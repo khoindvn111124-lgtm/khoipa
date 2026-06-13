@@ -327,13 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.style.cursor = 'pointer';
                 item.addEventListener('click', (e) => {
                     if (e.target.closest('.get-btn')) return;
-                    // Tải trực tiếp file IPA về máy
-                    window._downloadIPA(downloadUrl, cleanName);
+                    // Mở modal cài đặt
+                    window._openInstallModal(cleanName, downloadUrl);
                 });
             }
             
             const buttonHtml = downloadUrl 
-                ? `<button class="get-btn" onclick="event.stopPropagation(); window._downloadIPA('${downloadUrl.replace(/'/g, "\\'")}', '${cleanName.replace(/'/g, "\\'")}')">NHẬN</button>`
+                ? `<button class="get-btn" onclick="event.stopPropagation(); window._openInstallModal('${cleanName.replace(/'/g, "\\'")}', '${downloadUrl.replace(/'/g, "\\'")}')">NHẬN</button>`
                 : '';
 
             item.innerHTML = `
