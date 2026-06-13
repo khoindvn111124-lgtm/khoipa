@@ -146,7 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Tải file repo.json tĩnh nếu chưa tải
             if (!allAppsLoaded) {
                 if (progressContainer) progressBar.style.width = '50%';
-                const response = await fetch(window.location.origin + '/repo.json');
+                // Thêm timestamp để bypass cache CDN của Cloudflare
+                const response = await fetch(window.location.origin + '/repo.json?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 allMergedApps = data.apps && Array.isArray(data.apps) ? data.apps : [];
