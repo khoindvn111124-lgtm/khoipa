@@ -545,11 +545,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // Close install modal on overlay click
-    document.getElementById('installModal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-            window._closeInstallModal();
-        }
-    });
+    const installModalEl = document.getElementById('installModal');
+    if (installModalEl) {
+        installModalEl.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                window._closeInstallModal();
+            }
+        });
+    }
 
     // ── Add Source Modal ──
     let _addSourceUrl = null;
