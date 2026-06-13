@@ -519,12 +519,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let _installData = null;
     window._openInstallModal = (appName, downloadUrl) => {
         _installData = { appName, downloadUrl };
-        document.getElementById('installModalAppName').textContent = appName;
-        document.getElementById('installModal').classList.add('active');
+        const appNameEl = document.getElementById('installModalAppName');
+        if (appNameEl) appNameEl.textContent = appName;
+        const installModalEl = document.getElementById('installModal');
+        if (installModalEl) installModalEl.classList.add('active');
         document.body.style.overflow = 'hidden';
     };
     window._closeInstallModal = () => {
-        document.getElementById('installModal').classList.remove('active');
+        const installModalEl = document.getElementById('installModal');
+        if (installModalEl) installModalEl.classList.remove('active');
         document.body.style.overflow = '';
         _installData = null;
     };
