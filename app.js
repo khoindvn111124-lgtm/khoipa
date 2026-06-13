@@ -485,7 +485,26 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
         
-        // Dùng iframe ẩn + Content-Disposition để ép trình duyệt tải file về máy
+        try {
+            // Thử fetch file để tải trực tiếp dưới dạng Blob (tránh mở tab mới nếu server hỗ trợ CORS)
+            const response = await fetch(downloadUrl);
+            if (response.ok) {
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = cleanName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+                return;
+            }
+        } catch (e) {
+            console.warn("Không thể tải trực tiếp qua fetch (CORS), chuyển sang phương thức fallback", e);
+        }
+        
+        // Fallback: Dùng thẻ a ẩn với thuộc tính download
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = cleanName;
