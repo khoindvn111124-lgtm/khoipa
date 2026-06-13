@@ -53,19 +53,7 @@ async function mergeRepos() {
     }
 
     if (repos.length === 0) {
-        repos = [
-            "https://repository.apptesters.org",
-            "https://appstore.sidelix.vip/repos/esign.php",
-            "https://ipa.thuthuatjb.com/repo",
-            "http://ittza7aa.com/repo.json",
-            "https://ipa.cypwn.xyz/cypwn.json",
-            "https://fastsign.dev/repo.json",
-            "https://api.unkeyapp.com/v1/application/source.json",
-            "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.flekstore.json",
-            "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/repo.buildstore.json",
-            "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtkg.json",
-            "https://raw.githubusercontent.com/drphe/KhoIPA/main/upload/ipaomtk.json"
-        ];
+        console.log("Cảnh báo: khoipa.txt trống hoặc không tồn tại. Không có repo nào để gộp.");
     }
 
     const allApps = [];
