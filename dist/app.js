@@ -482,8 +482,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Download IPA trực tiếp ──
     window._downloadIPA = async (downloadUrl, appName) => {
         if (!downloadUrl) return;
-        // Mở link tải trực tiếp trong tab mới để trình duyệt tự động tải file
-        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+        
+        const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
+        
+        // Dùng iframe ẩn + Content-Disposition để ép trình duyệt tải file về máy
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = cleanName;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // ── Install Modal (giữ lại cho nguồn repo) ──
