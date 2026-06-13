@@ -1,6 +1,11 @@
-name: Daily Build
+name: Build repo.json
 
 on:
+  push:
+    paths:
+      - 'khoipa.txt'
+      - 'merge-repos.js'
+      - '.github/workflows/daily-build.yml'
   schedule:
     - cron: '0 0 * * *'    # Chạy lúc 0:00 UTC mỗi ngày
     - cron: '0 12 * * *'   # Chạy lúc 12:00 UTC mỗi ngày
@@ -10,16 +15,27 @@ permissions:
   contents: write            # Cần để push commit
 
 jobs:
-  trigger-build:
+  build-repo-json:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Trigger rebuild via empty commit
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build repo.json
+        run: npm run build
+
+      - name: Commit and push repo.json
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git pull --rebase origin main
-          git commit --allow-empty -m "chore: auto rebuild to update repos"
+          git add repo.json dist/repo.json
+          git diff --staged --quiet || git commit -m "chore: auto update repo.json ($(date +'%Y-%m-%d'))"
           git push
