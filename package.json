@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "node merge-repos.js && powershell -Command \"Copy-Item app.js,index.html,khoipa.txt -Destination dist -Force\""
+    "build": "node merge-repos.js && node -e \"var fs=require('fs');['app.js','index.html','khoipa.txt'].forEach(function(f){fs.copyFileSync(f,'dist/'+f)})\""
   },
   "dependencies": {
 
