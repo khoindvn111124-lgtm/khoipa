@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let serverTotalApps = 0;
     let serverTotalPages = 0;
     let currentSearchTerm = '';
+    let activeCategory = 'all';
 
     const getTranslateUrl = (text) => {
         return `/api/translate?q=${encodeURIComponent(text)}`;
