@@ -485,31 +485,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
         
-        try {
-            // Thử fetch file để tải trực tiếp dưới dạng Blob (tránh mở tab mới nếu server hỗ trợ CORS)
-            const response = await fetch(downloadUrl);
-            if (response.ok) {
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = cleanName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(blobUrl);
-                return;
-            }
-        } catch (e) {
-            console.warn("Không thể tải trực tiếp qua fetch (CORS), chuyển sang phương thức fallback", e);
-        }
+        // Trên iOS/Safari, việc tạo thẻ a ẩn rồi click() đôi khi bị chặn hoặc không hoạt động tốt nếu không có tương tác trực tiếp.
+        // Do đó, chúng ta sẽ chuyển hướng trực tiếp window.location.href hoặc mở tab mới để trình duyệt tự động tải file về.
         
-        // Fallback: Dùng thẻ a ẩn với thuộc tính download
+        // Nếu là link github release hoặc link trực tiếp, trình duyệt sẽ tự động tải xuống khi chuyển hướng.
+        // Sử dụng thẻ a ảo nhưng gán trực tiếp thuộc tính download và click ngay lập tức.
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = cleanName;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+        // Không dùng target='_blank' để tránh mở tab mới trống, để trình duyệt tự xử lý tải xuống trên tab hiện tại
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
