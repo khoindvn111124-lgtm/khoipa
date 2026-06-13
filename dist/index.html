@@ -766,20 +766,8 @@
         </div>
         <!-- Quick Add Source Buttons -->
         <div class="quick-add-source">
-            <a href="javascript:void(0)" onclick="window._quickAddSource('esign')" class="quick-add-btn esign">
-                <i class="bi bi-pen-fill"></i> ESign
-            </a>
-            <a href="javascript:void(0)" onclick="window._quickAddSource('ksign')" class="quick-add-btn ksign">
-                <i class="bi bi-pencil-square"></i> KSign
-            </a>
-            <a href="javascript:void(0)" onclick="window._quickAddSource('gbox')" class="quick-add-btn gbox">
-                <i class="bi bi-box-seam-fill"></i> GBox
-            </a>
-            <a href="javascript:void(0)" onclick="window._quickAddSource('feather')" class="quick-add-btn feather">
-                <i class="bi bi-feather"></i> Feather
-            </a>
-            <button class="quick-add-btn copy" onclick="window._copyRepoUrl()" style="background: linear-gradient(135deg, #8E8E93, #636366);">
-                <i class="bi bi-clipboard"></i> Sao chép
+            <button class="quick-add-btn copy" onclick="window._copyRepoUrl()" style="background: linear-gradient(135deg, #8E8E93, #636366); width: 100%; justify-content: center;">
+                <i class="bi bi-clipboard"></i> Sao chép URL nguồn tổng hợp
             </button>
         </div>
     </div>
@@ -815,74 +803,12 @@
         <div id="repoList"></div>
     </div>
 
-    <!-- ==================== INSTALL ACTION SHEET MODAL ==================== -->
-    <div class="install-modal-overlay" id="installModal">
-        <div class="install-modal">
-            <div class="install-modal-handle"></div>
-            <div class="install-modal-title">CÀI ĐẶT QUA</div>
-            <div class="install-modal-app-name" id="installModalAppName"></div>
-            <button class="install-option" onclick="window._installAction('esign')">
-                <div class="install-option-icon esign"><i class="bi bi-pen-fill"></i></div>
-                <div class="option-text">
-                    <div class="option-label">Cài qua ESign</div>
-                    <div class="option-sub">Ký & cài đặt bằng ESign</div>
-                </div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="install-option" onclick="window._installAction('feather')">
-                <div class="install-option-icon feather"><i class="bi bi-feather"></i></div>
-                <div class="option-text">
-                    <div class="option-label">Cài qua Feather</div>
-                    <div class="option-sub">Ký & cài đặt bằng Feather</div>
-                </div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="install-option" onclick="window._installAction('ksign')">
-                <div class="install-option-icon ksign"><i class="bi bi-pencil-square"></i></div>
-                <div class="option-text">
-                    <div class="option-label">Cài qua KSign</div>
-                    <div class="option-sub">Ký & cài đặt bằng KSign</div>
-                </div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="install-option" onclick="window._installAction('direct')">
-                <div class="install-option-icon" style="background: linear-gradient(135deg, #8E8E93, #636366);"><i class="bi bi-download"></i></div>
-                <div class="option-text">
-                    <div class="option-label">Tải trực tiếp IPA</div>
-                    <div class="option-sub">Tải file .ipa về máy</div>
-                </div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="install-modal-cancel" onclick="window._closeInstallModal()">Hủy</button>
-        </div>
-    </div>
-
     <!-- ==================== ADD SOURCE ACTION SHEET MODAL ==================== -->
     <div class="install-modal-overlay" id="addSourceModal">
         <div class="install-modal">
             <div class="install-modal-handle"></div>
-            <div class="install-modal-title">THÊM NGUỒN VÀO</div>
+            <div class="install-modal-title">SAO CHÉP NGUỒN</div>
             <div class="install-modal-app-name" id="addSourceModalUrl" style="font-size:13px; font-weight:400; color:var(--app-gray);"></div>
-            <button class="addsource-option" onclick="window._addSourceAction('esign')">
-                <div class="addsource-icon" style="background:linear-gradient(135deg,#007AFF,#5856D6)"><i class="bi bi-pen-fill"></i></div>
-                <div class="option-label">Thêm vào ESign</div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="addsource-option" onclick="window._addSourceAction('feather')">
-                <div class="addsource-icon" style="background:linear-gradient(135deg,#34C759,#30D158)"><i class="bi bi-feather"></i></div>
-                <div class="option-label">Thêm vào Feather</div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="addsource-option" onclick="window._addSourceAction('ksign')">
-                <div class="addsource-icon" style="background:linear-gradient(135deg,#FF9500,#FF6B00)"><i class="bi bi-pencil-square"></i></div>
-                <div class="option-label">Thêm vào KSign</div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
-            <button class="addsource-option" onclick="window._addSourceAction('gbox')">
-                <div class="addsource-icon" style="background:linear-gradient(135deg,#AF52DE,#BF5AF2)"><i class="bi bi-box-seam-fill"></i></div>
-                <div class="option-label">Thêm vào GBox</div>
-                <i class="bi bi-chevron-right option-arrow"></i>
-            </button>
             <button class="addsource-option" onclick="window._addSourceAction('copy')">
                 <div class="addsource-icon" style="background:linear-gradient(135deg,#8E8E93,#636366)"><i class="bi bi-clipboard"></i></div>
                 <div class="option-label">Sao chép URL nguồn</div>
