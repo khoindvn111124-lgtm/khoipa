@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Tải file repo.json tĩnh nếu chưa tải
             if (!allAppsLoaded) {
                 if (progressContainer) progressBar.style.width = '50%';
-                const response = await fetch('/repo.json');
+                const response = await fetch(window.location.origin + '/repo.json');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 allMergedApps = data.apps && Array.isArray(data.apps) ? data.apps : [];
@@ -482,11 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Download IPA trực tiếp ──
     window._downloadIPA = async (downloadUrl, appName) => {
         if (!downloadUrl) return;
-        
-        const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
-        
-        // Dùng API download proxy để ép tải file (server.js sẽ stream file và set Content-Disposition)
-        window.location.href = `/api/download-ipa?url=${encodeURIComponent(downloadUrl)}&name=${encodeURIComponent(cleanName)}`;
+        // Mở link tải trực tiếp trong tab mới để trình duyệt tự động tải file
+        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
     };
 
     // ── Install Modal (giữ lại cho nguồn repo) ──
