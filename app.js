@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginationLast = document.getElementById('paginationLast');
     const paginationInfo = document.getElementById('paginationInfo');
 
-    let currentApps = [];
-    let allRepos = [];
-    let activeCategory = 'all';
+    let allMergedApps = [];  // Toàn bộ dữ liệu tĩnh tải về 1 lần
+    let allAppsLoaded = false;
+
     
     let currentPage = 1;
     const PAGE_SIZE = 50;
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // ── Fetch All Repos (gọi API phân trang từ server) ──
+    // ── Fetch All Repos (Tải file repo.json tĩnh và xử lý client-side) ──
     async function fetchAllRepos() {
         const loadingTextEl = document.getElementById('loadingText');
         const progressContainer = document.getElementById('progressContainer');
@@ -142,36 +142,42 @@ document.addEventListener('DOMContentLoaded', () => {
         appsSectionTitle.classList.add('d-none');
 
         try {
-            // Xây dựng URL API phân trang
-            const url = new URL('/repo.json', window.location.origin);
-            url.searchParams.set('page', currentPage);
-            url.searchParams.set('size', PAGE_SIZE);
+            // Tải file repo.json tĩnh nếu chưa tải
+            if (!allAppsLoaded) {
+                if (progressContainer) progressBar.style.width = '50%';
+                const response = await fetch('/repo.json');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                allMergedApps = data.apps && Array.isArray(data.apps) ? data.apps : [];
+                allAppsLoaded = true;
+            }
+
+            if (progressContainer) progressBar.style.width = '80%';
+
+            // Thực hiện lọc client-side
+            let filteredApps = allMergedApps;
+
+            // Lọc theo danh mục
             if (activeCategory && activeCategory !== 'all') {
-                url.searchParams.set('category', activeCategory);
+                filteredApps = filteredApps.filter(app => categorizeApp(app) === activeCategory);
             }
+
+            // Lọc theo từ khóa tìm kiếm
             if (currentSearchTerm) {
-                url.searchParams.set('search', currentSearchTerm);
+                const q = currentSearchTerm.toLowerCase();
+                filteredApps = filteredApps.filter(app =>
+                    (app.name && app.name.toLowerCase().includes(q)) ||
+                    (app.bundleIdentifier && app.bundleIdentifier.toLowerCase().includes(q))
+                );
             }
 
-            if (progressContainer) progressBar.style.width = '60%';
+            serverTotalApps = filteredApps.length;
+            serverTotalPages = Math.ceil(serverTotalApps / PAGE_SIZE);
 
-            const response = await fetch(url.toString());
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            if (progressContainer) progressBar.style.width = '90%';
-
-            const data = await response.json();
-            const apps = data.apps && Array.isArray(data.apps) ? data.apps : [];
-            currentApps = apps;
-
-            // Lấy metadata phân trang từ server
-            if (data.pagination) {
-                serverTotalApps = data.pagination.totalApps;
-                serverTotalPages = data.pagination.totalPages;
-            } else {
-                serverTotalApps = apps.length;
-                serverTotalPages = 1;
-            }
+            // Cắt mảng theo trang hiện tại
+            const startIdx = (currentPage - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, serverTotalApps);
+            const pageApps = filteredApps.slice(startIdx, endIdx);
 
             appsSectionTitle.classList.remove('d-none');
             
@@ -186,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headerSubtitle.textContent = `${serverTotalApps.toLocaleString()} ứng dụng`;
             }
 
-            // Render danh sách ứng dụng (flat = true vì server đã lọc và sắp xếp sẵn)
-            renderApps(currentApps, true);
+            // Render danh sách ứng dụng
+            renderApps(pageApps, true);
             updatePagination(serverTotalPages);
         } catch (error) {
             console.error('Lỗi tải repo.json:', error);
