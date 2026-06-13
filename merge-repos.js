@@ -226,9 +226,11 @@ async function mergeRepos() {
         fs.mkdirSync(distDir, { recursive: true });
     }
 
-    // Ghi file repo.json tĩnh vào dist (dạng minify để giảm dung lượng file dưới 25MB)
-    fs.writeFileSync(path.join(distDir, 'repo.json'), JSON.stringify(fullRepoJson), 'utf8');
-    console.log(`Đã ghi ${filteredApps.length} ứng dụng vào dist/repo.json thành công!`);
+    // Ghi file repo.json tĩnh vào cả thư mục gốc và thư mục dist (dạng minify để giảm dung lượng file dưới 25MB)
+    const repoJsonStr = JSON.stringify(fullRepoJson);
+    fs.writeFileSync(path.join(__dirname, 'repo.json'), repoJsonStr, 'utf8');
+    fs.writeFileSync(path.join(distDir, 'repo.json'), repoJsonStr, 'utf8');
+    console.log(`Đã ghi ${filteredApps.length} ứng dụng vào repo.json và dist/repo.json thành công!`);
 }
 
 mergeRepos().catch(err => {
