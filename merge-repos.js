@@ -109,15 +109,28 @@ async function mergeRepos() {
             name: app.name || 'Ứng dụng',
             bundleIdentifier: app.bundleIdentifier || app.bundleID || key,
             version: app.version || '1.0',
-            versionDate: app.versionDate || app.date || app.addedDate || app.timestamp || '',
-            size: app.size || 0,
-            iconURL: app.iconURL || app.icon || '',
-            downloadURL: app.downloadURL || app.ipaURL || app.url || app.down || ''
+            size: app.size || 0
         };
+
+        const versionDate = app.versionDate || app.date || app.addedDate || app.timestamp || '';
+        if (versionDate) optimizedApp.versionDate = versionDate;
+
+        const iconURL = app.iconURL || app.icon || '';
+        if (iconURL) optimizedApp.iconURL = iconURL;
+
+        const downloadURL = app.downloadURL || app.ipaURL || app.url || app.down || '';
+        if (downloadURL) optimizedApp.downloadURL = downloadURL;
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
         if (desc) {
-            optimizedApp.localizedDescription = cleanAndExtractFeatures(desc);
+            let cleanedDesc = cleanAndExtractFeatures(desc);
+            if (cleanedDesc) {
+                // Giới hạn độ dài mô tả tối đa 500 ký tự để giảm dung lượng file JSON
+                if (cleanedDesc.length > 500) {
+                    cleanedDesc = cleanedDesc.substring(0, 500) + '...';
+                }
+                optimizedApp.localizedDescription = cleanedDesc;
+            }
         }
 
         const existing = uniqueAppsMap.get(key);
@@ -225,8 +238,8 @@ async function mergeRepos() {
         fs.mkdirSync(distDir, { recursive: true });
     }
 
-    // Ghi file repo.json tĩnh vào dist
-    fs.writeFileSync(path.join(distDir, 'repo.json'), JSON.stringify(fullRepoJson, null, 2), 'utf8');
+    // Ghi file repo.json tĩnh vào dist (dạng minify để giảm dung lượng file dưới 25MB)
+    fs.writeFileSync(path.join(distDir, 'repo.json'), JSON.stringify(fullRepoJson), 'utf8');
     console.log(`Đã ghi ${filteredApps.length} ứng dụng vào dist/repo.json thành công!`);
 }
 
