@@ -480,23 +480,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Download IPA trực tiếp ──
-    window._downloadIPA = async (downloadUrl, appName) => {
+    window._downloadIPA = (downloadUrl, appName) => {
         if (!downloadUrl) return;
         
-        const cleanName = (appName || 'app').replace(/[^a-zA-Z0-9-_]/g, '_') + '.ipa';
-        
-        // Trên iOS/Safari, việc tạo thẻ a ẩn rồi click() đôi khi bị chặn hoặc không hoạt động tốt nếu không có tương tác trực tiếp.
-        // Do đó, chúng ta sẽ chuyển hướng trực tiếp window.location.href hoặc mở tab mới để trình duyệt tự động tải file về.
-        
-        // Nếu là link github release hoặc link trực tiếp, trình duyệt sẽ tự động tải xuống khi chuyển hướng.
-        // Sử dụng thẻ a ảo nhưng gán trực tiếp thuộc tính download và click ngay lập tức.
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = cleanName;
-        // Không dùng target='_blank' để tránh mở tab mới trống, để trình duyệt tự xử lý tải xuống trên tab hiện tại
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Chuyển hướng trực tiếp trang web sang link tải.
+        // Đối với file .ipa, trình duyệt (Safari/Chrome) sẽ không chuyển trang mà tự động hiện popup hỏi tải file về máy.
+        window.location.href = downloadUrl;
     };
 
     // ── Install Modal (giữ lại cho nguồn repo) ──
