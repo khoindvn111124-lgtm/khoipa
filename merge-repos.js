@@ -100,8 +100,9 @@ async function mergeRepos() {
             size: app.size || (app.versions && app.versions[0] && app.versions[0].size) || 0
         };
 
-        const versionDate = app.versionDate || app.date || app.addedDate || app.timestamp || (app.versions && app.versions[0] && app.versions[0].date) || '';
-        if (versionDate) optimizedApp.versionDate = versionDate;
+        // Bỏ tab Mới nhất bằng cách không gán versionDate
+        // const versionDate = app.versionDate || app.date || app.addedDate || app.timestamp || (app.versions && app.versions[0] && app.versions[0].date) || '';
+        // if (versionDate) optimizedApp.versionDate = versionDate;
 
         const iconURL = app.iconURL || app.icon || '';
         if (iconURL) optimizedApp.iconURL = iconURL;
@@ -226,6 +227,12 @@ async function mergeRepos() {
     const removedEmpty = mergedApps.length - filteredApps.length;
     console.log(`  Đã loại bỏ ${removedEmpty} app không có link tải`);
 
+    // Bước 2: Bỏ tab Ứng dụng - Chỉ giữ Game (type: 2) và Plugin/Tweak (type: 5)
+    const beforeTypeFilter = filteredApps.length;
+    filteredApps = filteredApps.filter(app => app.type === 2 || app.type === 5);
+    const removedUtility = beforeTypeFilter - filteredApps.length;
+    console.log(`  Đã loại bỏ ${removedUtility} ứng dụng thường (type: 1), chỉ giữ Game & Plugin`);
+
     // Bước 2: Kiểm tra HEAD request nếu được bật (CHECK_LINKS=true)
     const shouldCheckLinks = process.env.CHECK_LINKS === 'true';
     if (shouldCheckLinks) {
@@ -275,20 +282,8 @@ async function mergeRepos() {
 
     console.log(`Còn lại ${filteredApps.length} app sau khi lọc\n`);
 
-    // Sắp xếp theo ngày mới nhất lên đầu
-    filteredApps.sort((a, b) => {
-        const getAppDate = (app) => {
-            const dateStr = app.versionDate || '';
-            if (!dateStr) return 0;
-            if (!isNaN(dateStr)) return Number(dateStr);
-            const parsed = Date.parse(dateStr);
-            return isNaN(parsed) ? 0 : parsed;
-        };
-        const dateA = getAppDate(a);
-        const dateB = getAppDate(b);
-        if (dateA !== dateB) return dateB - dateA;
-        return (a.name || '').localeCompare(b.name || '');
-    });
+    // Sắp xếp theo tên A-Z (đã bỏ tab Mới nhất nên không cần sắp xếp theo ngày)
+    filteredApps.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     const fullRepoJson = {
         name: "Kho IPA Store",
