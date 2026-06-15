@@ -112,6 +112,23 @@ async function mergeRepos() {
         }
         if (downloadURL) optimizedApp.downloadURL = downloadURL;
 
+        // Giữ lại hoặc tự động gán category để hiển thị đúng tab trên Esign/KSign
+        let category = app.category || '';
+        const dlLower = (downloadURL || '').toLowerCase();
+        const nameLower = (app.name || '').toLowerCase();
+        
+        if (dlLower.endsWith('.dylib') || dlLower.includes('.dylib?') || nameLower.includes('.dylib')) {
+            category = 'tweak'; // Esign/KSign nhận diện 'tweak' là Plugin
+        } else if (!category) {
+            // Nếu không có category, tự động phân loại cơ bản
+            if (nameLower.includes('game') || nameLower.includes('hack') || nameLower.includes('mod')) {
+                category = 'game';
+            } else {
+                category = 'utility'; // Mặc định là Công cụ
+            }
+        }
+        optimizedApp.category = category;
+
         let desc = app.localizedDescription || app.description || app.subtitle || '';
         if (desc) {
             let cleanedDesc = cleanAndExtractFeatures(desc);
