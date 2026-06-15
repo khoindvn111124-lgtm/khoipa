@@ -241,9 +241,16 @@ async function mergeRepos() {
     });
 
     const fullRepoJson = {
-        name: "Kho IPA Store Tổng Hợp",
+        name: "Kho IPA Store",
         identifier: "com.khoipa.store",
-        description: `Kho ứng dụng IPA tổng hợp từ nhiều nguồn, tự động cập nhật và lọc trùng phiên bản mới nhất. Tổng cộng ${filteredApps.length} ứng dụng.`,
+        sourceURL: "https://khoipa.pages.dev",
+        iconURL: "https://khoipa.pages.dev/icon.png",
+        website: "https://khoipa.pages.dev",
+        subtitle: `Tổng hợp ${filteredApps.length} ứng dụng IPA từ nhiều nguồn, tự động cập nhật & lọc trùng phiên bản mới nhất`,
+        META: {
+            repoName: "Kho IPA Store",
+            repoIcon: "https://khoipa.pages.dev/icon.png"
+        },
         apps: filteredApps
     };
 
