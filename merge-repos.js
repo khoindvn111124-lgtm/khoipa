@@ -171,15 +171,20 @@ async function mergeRepos() {
             isGame = true;
         }
 
+        let type = 1; // Mặc định là Ứng dụng (type: 1)
         if (isTweak) {
             category = 'tweak';
+            type = 5; // Plugin/Tweak (type: 5)
         } else if (isGame) {
             category = 'game';
+            type = 2; // Trò chơi (type: 2)
         } else {
             category = 'utility';
+            type = 1; // Ứng dụng (type: 1)
         }
         
         optimizedApp.category = category;
+        optimizedApp.type = type;
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
         if (desc) {
