@@ -184,9 +184,12 @@ async function mergeRepos() {
             type = 1; // Ứng dụng (type: 1)
         }
         
-        // Không gán type/category để Esign/KSign không chia tab
-        // optimizedApp.category = category;
-        // optimizedApp.type = type;
+        // Chỉ gán type và category cho Game (2) và Plugin (5) để Esign/KSign tạo tab tương ứng.
+        // Ứng dụng thường (type 1) sẽ không gán type/category để không tạo tab "Ứng dụng", nhưng vẫn hiện ở tab Mặc định.
+        if (type === 2 || type === 5) {
+            optimizedApp.category = category;
+            optimizedApp.type = type;
+        }
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
         if (desc) {
