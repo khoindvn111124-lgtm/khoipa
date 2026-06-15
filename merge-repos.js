@@ -184,8 +184,9 @@ async function mergeRepos() {
             type = 1; // Ứng dụng (type: 1)
         }
         
-        optimizedApp.category = category;
-        optimizedApp.type = type;
+        // Không gán type/category để Esign/KSign không chia tab
+        // optimizedApp.category = category;
+        // optimizedApp.type = type;
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
         if (desc) {
@@ -228,10 +229,11 @@ async function mergeRepos() {
     console.log(`  Đã loại bỏ ${removedEmpty} app không có link tải`);
 
     // Bước 2: Bỏ tab Ứng dụng - Chỉ giữ Game (type: 2) và Plugin/Tweak (type: 5)
-    const beforeTypeFilter = filteredApps.length;
-    filteredApps = filteredApps.filter(app => app.type === 2 || app.type === 5);
-    const removedUtility = beforeTypeFilter - filteredApps.length;
-    console.log(`  Đã loại bỏ ${removedUtility} ứng dụng thường (type: 1), chỉ giữ Game & Plugin`);
+    // (Đã bỏ lọc này để hiển thị đầy đủ tất cả app, không chia tab)
+    // const beforeTypeFilter = filteredApps.length;
+    // filteredApps = filteredApps.filter(app => app.type === 2 || app.type === 5);
+    // const removedUtility = beforeTypeFilter - filteredApps.length;
+    // console.log(`  Đã loại bỏ ${removedUtility} ứng dụng thường (type: 1), chỉ giữ Game & Plugin`);
 
     // Bước 2: Kiểm tra HEAD request nếu được bật (CHECK_LINKS=true)
     const shouldCheckLinks = process.env.CHECK_LINKS === 'true';
