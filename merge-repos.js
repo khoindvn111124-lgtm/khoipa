@@ -96,17 +96,20 @@ async function mergeRepos() {
         const optimizedApp = {
             name: app.name || 'Ứng dụng',
             bundleIdentifier: app.bundleIdentifier || app.bundleID || key,
-            version: app.version || '1.0',
-            size: app.size || 0
+            version: app.version || (app.versions && app.versions[0] && app.versions[0].version) || '1.0',
+            size: app.size || (app.versions && app.versions[0] && app.versions[0].size) || 0
         };
 
-        const versionDate = app.versionDate || app.date || app.addedDate || app.timestamp || '';
+        const versionDate = app.versionDate || app.date || app.addedDate || app.timestamp || (app.versions && app.versions[0] && app.versions[0].date) || '';
         if (versionDate) optimizedApp.versionDate = versionDate;
 
         const iconURL = app.iconURL || app.icon || '';
         if (iconURL) optimizedApp.iconURL = iconURL;
 
-        const downloadURL = app.downloadURL || app.ipaURL || app.url || app.down || '';
+        let downloadURL = app.downloadURL || app.ipaURL || app.url || app.down || '';
+        if (!downloadURL && app.versions && app.versions[0] && app.versions[0].downloadURL) {
+            downloadURL = app.versions[0].downloadURL;
+        }
         if (downloadURL) optimizedApp.downloadURL = downloadURL;
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
