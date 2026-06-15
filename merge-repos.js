@@ -116,24 +116,69 @@ async function mergeRepos() {
         let category = (app.category || '').toLowerCase().trim();
         const dlLower = (downloadURL || '').toLowerCase();
         const nameLower = (app.name || '').toLowerCase();
+        const bundleLower = (app.bundleIdentifier || app.bundleID || '').toLowerCase();
         
-        if (dlLower.endsWith('.dylib') || dlLower.includes('.dylib?') || nameLower.includes('.dylib')) {
-            category = 'tweak'; // Esign/KSign nhận diện 'tweak' là Plugin
-        } else if (!category) {
-            // Nếu không có category, tự động phân loại cơ bản
-            if (nameLower.includes('game') || nameLower.includes('hack') || nameLower.includes('mod')) {
-                category = 'game';
-            } else {
-                category = 'utility'; // Mặc định là Công cụ
-            }
-        } else {
-            // Chuẩn hóa các category lẻ tẻ về 3 nhóm chính: utility, game, tweak
-            if (category === 'games') {
-                category = 'game';
-            } else if (category === 'utilities' || category === 'entertainment' || category === 'social' || category === 'other') {
-                category = 'utility';
-            }
+        // 1. Nhận diện Tweak / Plugin
+        const isTweak = dlLower.endsWith('.dylib') || 
+                        dlLower.includes('.dylib?') || 
+                        dlLower.endsWith('.deb') || 
+                        dlLower.includes('.deb?') || 
+                        nameLower.includes('.dylib') || 
+                        nameLower.includes('tweak') || 
+                        nameLower.includes('plugin') || 
+                        nameLower.includes('inject') || 
+                        bundleLower.includes('tweak') || 
+                        bundleLower.includes('dylib');
+
+        // 2. Nhận diện Game / Trò chơi
+        // Các từ khóa chỉ có ở game
+        const gameKeywords = [
+            'game', 'arcade', 'simulator', 'rpg', 'puzzle', 'racing', 'sports', 'fight', 'battle', 'clash', 
+            'lego', 'pokemon', 'mario', 'sonic', 'pubg', 'roblox', 'minecraft', 'gta', 'angry birds', 
+            'subway surfers', 'candy crush', 'plants vs', 'pvz', 'fifa', 'pes', 'efootball', 'shadow fight', 
+            'hill climb', 'temple run', 'fruit ninja', 'among us', 'fortnite', 'codm', 'genshin', 'honkai', 
+            'wild rift', 'lien quan', 'liên quân', 'brawl stars', 'clash royale', 'clash of clans', 'free fire', 
+            'angrybirds', 'cooking', 'solitaire', 'sudoku', 'chess', 'tetris', 'pac-man', 'pacman', 'monopoly'
+        ];
+        const gameBundleKeywords = [
+            'game', 'playrix', 'rovio', 'mojang', 'sega', 'nintendo', 'konami', 'capcom', 'square-enix', 
+            'bandainamco', 'ubisoft', 'gameloft', 'supercell', 'roblox', 'tencent', 'netease', 'mihoyo', 
+            'garena', 'epicgames', 'rockstargames', 'activision', 'blizzard', 'riotgames', 'dts.freefire'
+        ];
+        
+        // Các từ khóa của ứng dụng thông thường (để tránh nhận diện nhầm khi có từ mod/hack)
+        const appKeywords = [
+            'learning', 'piano', 'notes', 'editor', 'camera', 'music', 'vpn', 'browser', 'dictionary', 
+            'photo', 'video', 'youtube', 'facebook', 'messenger', 'wechat', 'tiktok', 'instagram', 
+            'spotify', 'adblock', 'blocker', 'cleaner', 'manager', 'downloader', 'torrent', 'keyboard', 
+            'font', 'wallpaper', 'widget', 'theme', 'calculator', 'scanner', 'pdf', 'office', 'word', 
+            'excel', 'powerpoint', 'note', 'diary', 'calendar', 'clock', 'alarm', 'weather', 'map', 
+            'navigation', 'gps', 'fitness', 'workout', 'health', 'diet', 'recipe', 'shopping', 'finance', 
+            'bank', 'wallet', 'crypto', 'bitcoin', 'investing', 'stock', 'trading', 'news', 'book', 
+            'reader', 'comic', 'manga', 'anime', 'tv', 'show', 'stream', 'live', 'radio', 'podcast', 
+            'chat', 'mail', 'email', 'contact', 'call', 'sms', 'text', 'voice', 'recorder', 'creator', 
+            'maker', 'builder', 'designer', 'painter', 'draw', 'sketch', 'art', 'pic', 'picture', 'film', 
+            'audio', 'sound', 'song', 'player', 'playlist', 'equalizer', 'lyrics', 'karaoke', 'instrument', 
+            'guitar', 'drum', 'violin', 'flute', 'synth', 'dj', 'mix', 'remix', 'beat', 'loop', 'sample'
+        ];
+
+        let isGame = false;
+        if (category === 'game' || category === 'games') {
+            isGame = true;
+        } else if (gameKeywords.some(kw => nameLower.includes(kw)) || gameBundleKeywords.some(kw => bundleLower.includes(kw))) {
+            isGame = true;
+        } else if ((nameLower.includes('hack') || nameLower.includes('mod') || nameLower.includes('cheat')) && !appKeywords.some(kw => nameLower.includes(kw))) {
+            isGame = true;
         }
+
+        if (isTweak) {
+            category = 'tweak';
+        } else if (isGame) {
+            category = 'game';
+        } else {
+            category = 'utility';
+        }
+        
         optimizedApp.category = category;
 
         let desc = app.localizedDescription || app.description || app.subtitle || '';
