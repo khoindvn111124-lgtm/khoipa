@@ -113,7 +113,7 @@ async function mergeRepos() {
         if (downloadURL) optimizedApp.downloadURL = downloadURL;
 
         // Giữ lại hoặc tự động gán category để hiển thị đúng tab trên Esign/KSign
-        let category = app.category || '';
+        let category = (app.category || '').toLowerCase().trim();
         const dlLower = (downloadURL || '').toLowerCase();
         const nameLower = (app.name || '').toLowerCase();
         
@@ -125,6 +125,13 @@ async function mergeRepos() {
                 category = 'game';
             } else {
                 category = 'utility'; // Mặc định là Công cụ
+            }
+        } else {
+            // Chuẩn hóa các category lẻ tẻ về 3 nhóm chính: utility, game, tweak
+            if (category === 'games') {
+                category = 'game';
+            } else if (category === 'utilities' || category === 'entertainment' || category === 'social' || category === 'other') {
+                category = 'utility';
             }
         }
         optimizedApp.category = category;
