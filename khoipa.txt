@@ -31,3 +31,4 @@ https://altstore.fouadraheb.com/
 https://raw.githubusercontent.com/yodaluca23/SpotC-AltStore-Repo/main/AltStore%20Repo.json
 https://apps.sidestore.io/
 https://raw.githubusercontent.com/royilkom-alt/EthSign/refs/heads/main/EthSign.json
+https://raw.githubusercontent.com/testbung1/testbung1.github.io/refs/heads/main/repo.json
