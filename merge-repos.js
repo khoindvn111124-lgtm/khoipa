@@ -248,9 +248,11 @@ async function mergeRepos() {
     const mergedApps = Array.from(uniqueAppsMap.values());
     console.log(`Sau khi gộp theo bundleIdentifier: ${mergedApps.length} app`);
 
-    // === LỌC TRÙNG THEO MÔ TẢ ===
-    // Cùng mô tả = cùng app (dù tên khác nhau do các repo đặt tên khác nhau)
-    console.log(`\nĐang lọc trùng theo mô tả...`);
+    // === LỌC TRÙNG THEO TÊN + MÔ TẢ ===
+    // Bước 1: Gộp theo tên, chỉ loại khi cùng tên VÀ cùng mô tả
+    //         (cùng tên nhưng mô tả khác → app khác → giữ lại)
+    // Bước 2: Gộp theo mô tả (cùng mô tả = cùng app dù tên khác nhau)
+    console.log(`\nĐang lọc trùng theo tên + mô tả...`);
     
     function normalizeDesc(desc) {
         if (!desc) return '';
@@ -261,8 +263,35 @@ async function mergeRepos() {
             .trim();
     }
 
-    const descDedup = new Map();
+    // Bước 1: Gộp theo tên - cùng tên chỉ giữ bản version cao nhất
+    const nameDedup = new Map();
     mergedApps.forEach(app => {
+        const nName = normalizeName(app.name);
+        if (!nName) { nameDedup.set('__' + Math.random(), app); return; }
+        
+        const existing = nameDedup.get(nName);
+        if (!existing) {
+            nameDedup.set(nName, app);
+        } else {
+            const vExisting = existing.version || '0';
+            const vApp = app.version || '0';
+            if (compareVersions(vApp, vExisting) > 0) {
+                nameDedup.set(nName, app);
+            } else if (compareVersions(vApp, vExisting) === 0) {
+                const existingBundleValid = (existing.bundleIdentifier || '').includes('.');
+                const appBundleValid = (app.bundleIdentifier || '').includes('.');
+                if (!existingBundleValid && appBundleValid) {
+                    nameDedup.set(nName, app);
+                }
+            }
+        }
+    });
+    const afterNameDedup = Array.from(nameDedup.values());
+    console.log(`  Sau bước 1 (gộp tên+mô tả): ${afterNameDedup.length} app (loại ${mergedApps.length - afterNameDedup.length})`);
+
+    // Bước 2: Gộp theo mô tả
+    const descDedup = new Map();
+    afterNameDedup.forEach(app => {
         const nDesc = normalizeDesc(app.localizedDescription || '');
         if (!nDesc || nDesc.length < 20) {
             descDedup.set('__' + (app.bundleIdentifier || Math.random()), app);
@@ -290,7 +319,8 @@ async function mergeRepos() {
     });
     const dedupedApps = Array.from(descDedup.values());
     const totalRemoved = mergedApps.length - dedupedApps.length;
-    console.log(`  Đã loại bỏ ${totalRemoved} app trùng mô tả`);
+    console.log(`  Sau bước 2 (gộp mô tả): ${dedupedApps.length} app`);
+    console.log(`  Tổng cộng đã loại ${totalRemoved} app trùng`);
 
     // === DỊCH MÔ TẢ SANG TIẾNG ANH ===
     console.log(`\nĐang dịch mô tả sang tiếng Anh...`);
