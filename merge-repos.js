@@ -416,8 +416,8 @@ async function mergeRepos() {
     // const removedUtility = beforeTypeFilter - filteredApps.length;
     // console.log(`  Đã loại bỏ ${removedUtility} ứng dụng thường (type: 1), chỉ giữ Game & Plugin`);
 
-    // Bước 2: Kiểm tra HEAD request nếu được bật (CHECK_LINKS=true)
-    const shouldCheckLinks = process.env.CHECK_LINKS === 'true';
+    // Bước 2: Kiểm tra HEAD request (mặc định luôn bật, trừ khi đặt CHECK_LINKS=false)
+    const shouldCheckLinks = process.env.CHECK_LINKS !== 'false';
     if (shouldCheckLinks) {
         console.log(`  Đang kiểm tra ${filteredApps.length} link tải (HEAD request)...`);
         const CONCURRENCY = 30;
@@ -459,8 +459,6 @@ async function mergeRepos() {
         const beforeCheck = filteredApps.length;
         filteredApps = filteredApps.filter((_, idx) => aliveSet.has(idx));
         console.log(`  Đã loại bỏ thêm ${beforeCheck - filteredApps.length} app có link tải die (HEAD check)`);
-    } else {
-        console.log(`  (Bỏ qua HEAD check. Đặt CHECK_LINKS=true để kiểm tra link tải)`);
     }
 
     console.log(`Còn lại ${filteredApps.length} app sau khi lọc\n`);
