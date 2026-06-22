@@ -248,15 +248,27 @@ async function mergeRepos() {
     const mergedApps = Array.from(uniqueAppsMap.values());
     console.log(`Sau khi gộp theo bundleIdentifier: ${mergedApps.length} app`);
 
-    // === XÓA PREFIX KHÔI / IPAOMTK TRONG MÔ TẢ ===
-    console.log(`\nĐang dọn mô tả (xóa prefix ipaomtk.com | khoi)...`);
+    // === XÓA PREFIX KHÔI / IPAOMTK TRONG MÔ TẢ & TÊN ===
+    console.log(`\nĐang dọn mô tả & tên (xóa prefix ipaomtk.com | khoi)...`);
     mergedApps.forEach(app => {
+        // Dọn mô tả
         let desc = app.localizedDescription || app.description || '';
         if (desc) {
             desc = desc.replace(/^ipaomtk\.com\s*\|\s*/i, '');
             desc = desc.replace(/^khoi\s*\|\s*/i, '');
             desc = desc.replace(/^khoi\s*/i, '');
+            // Xóa IPAOMTK/ipaomtk ở đầu mô tả
+            desc = desc.replace(/^ipaomtk\s+/i, '');
+            desc = desc.replace(/^IPAOMTK\s+/i, '');
             app.localizedDescription = desc;
+        }
+        // Dọn tên: bỏ ipaomtk.com hoặc ipaomtk ở cuối hoặc làm hậu tố
+        if (app.name) {
+            app.name = app.name.replace(/[-\s]*ipaomtk\.com$/i, '');
+            app.name = app.name.replace(/[-\s]*ipaomtk$/i, '');
+            app.name = app.name.replace(/\s*ipaomtk\.com\s*/i, ' ');
+            app.name = app.name.replace(/\s*ipaomtk\s*/i, ' ');
+            app.name = app.name.trim();
         }
     });
 
@@ -279,18 +291,11 @@ async function mergeRepos() {
             .trim();
     }
 
-    // Bước 1: Gộp theo tên - cùng tên chỉ giữ bản version cao nhất
-    //         (trừ app tiếng Việt: giữ hết, không gộp)
+    // Bước 1: Gộp theo tên - TẤT CẢ app, cùng tên chỉ giữ bản version cao nhất
     const nameDedup = new Map();
     mergedApps.forEach(app => {
         const nName = normalizeName(app.name);
         if (!nName) { nameDedup.set('__' + Math.random(), app); return; }
-        const desc = app.localizedDescription || '';
-        // App tiếng Việt: không gộp, giữ hết
-        if (isVietnamese(desc)) {
-            nameDedup.set('__vi_' + (app.bundleIdentifier || Math.random()), app);
-            return;
-        }
         
         const existing = nameDedup.get(nName);
         if (!existing) {
