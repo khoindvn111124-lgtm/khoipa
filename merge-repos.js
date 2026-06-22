@@ -260,6 +260,8 @@ async function mergeRepos() {
             // Xóa IPAOMTK/ipaomtk ở đầu mô tả
             desc = desc.replace(/^ipaomtk\s+/i, '');
             desc = desc.replace(/^IPAOMTK\s+/i, '');
+            desc = desc.replace(/^Introduction\s+ipaomtk\s+app\s+is\s+/i, 'This is ');
+            desc = desc.replace(/^Introduction\s+IPAOMTK\s+App\s+is\s+/i, 'This is ');
             app.localizedDescription = desc;
         }
         // Dọn tên: bỏ ipaomtk.com hoặc ipaomtk ở cuối hoặc làm hậu tố
@@ -415,12 +417,14 @@ async function mergeRepos() {
     // === LỌC APP CÓ LINK TẢI LỖI HOẶC TRỐNG ===
     console.log(`\nĐang lọc link tải lỗi...`);
     
-    // Bước 1: Luôn loại bỏ app không có downloadURL
+    // Bước 1: Loại bỏ app không có downloadURL
     let filteredApps = dedupedApps.filter(app => {
-        const url = app.downloadURL;
-        if (!url || url.toString().trim() === '') {
+        const url = app.downloadURL ? app.downloadURL.toString().trim() : '';
+        
+        if (!url) {
             return false;
         }
+        
         return true;
     });
     const removedEmpty = dedupedApps.length - filteredApps.length;
