@@ -248,8 +248,8 @@ async function mergeRepos() {
     const mergedApps = Array.from(uniqueAppsMap.values());
     console.log(`Sau khi gộp theo bundleIdentifier: ${mergedApps.length} app`);
 
-    // === XÓA PREFIX KHÔI / IPAOMTK TRONG MÔ TẢ & TÊN ===
-    console.log(`\nĐang dọn mô tả & tên (xóa prefix ipaomtk.com | khoi)...`);
+    // === XÓA PREFIX KHÔI / IPAOMTK / RIFTYSIPALIBRARY TRONG MÔ TẢ & TÊN ===
+    console.log(`\nĐang dọn mô tả & tên (xóa prefix ipaomtk.com | khoi | riftysipalibrary)...`);
     mergedApps.forEach(app => {
         // Dọn mô tả
         let desc = app.localizedDescription || app.description || '';
@@ -262,6 +262,11 @@ async function mergeRepos() {
             desc = desc.replace(/^IPAOMTK\s+/i, '');
             desc = desc.replace(/^Introduction\s+ipaomtk\s+app\s+is\s+/i, 'This is ');
             desc = desc.replace(/^Introduction\s+IPAOMTK\s+App\s+is\s+/i, 'This is ');
+            // Xóa @riftysIPAlibrary hoặc riftysipalibrary trong mô tả
+            desc = desc.replace(/@riftysIPAlibrary\s*\|?\s*/gi, '');
+            desc = desc.replace(/riftysipalibrary/gi, '');
+            desc = desc.replace(/riftysipas/gi, '');
+            desc = desc.replace(/\s{2,}/g, ' ').trim();
             app.localizedDescription = desc;
         }
         // Dọn tên: bỏ ipaomtk.com hoặc ipaomtk ở cuối hoặc làm hậu tố
@@ -274,10 +279,10 @@ async function mergeRepos() {
         }
     });
 
-    // === LỌC TRÙNG THEO TÊN + MÔ TẢ ===
+    // === LỌC TRÙNG THEO MÔ TẢ ===
     // Chỉ lọc trùng app có mô tả ngôn ngữ khác (Anh, Trung, Nga...)
     // App có mô tả tiếng Việt → giữ nguyên, KHÔNG lọc
-    console.log(`\nĐang lọc trùng theo tên + mô tả...`);
+    console.log(`\nĐang lọc trùng theo mô tả...`);
     
     function isVietnamese(text) {
         const viPattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
@@ -293,35 +298,9 @@ async function mergeRepos() {
             .trim();
     }
 
-    // Bước 1: Gộp theo tên - TẤT CẢ app, cùng tên chỉ giữ bản version cao nhất
-    const nameDedup = new Map();
-    mergedApps.forEach(app => {
-        const nName = normalizeName(app.name);
-        if (!nName) { nameDedup.set('__' + Math.random(), app); return; }
-        
-        const existing = nameDedup.get(nName);
-        if (!existing) {
-            nameDedup.set(nName, app);
-        } else {
-            const vExisting = existing.version || '0';
-            const vApp = app.version || '0';
-            if (compareVersions(vApp, vExisting) > 0) {
-                nameDedup.set(nName, app);
-            } else if (compareVersions(vApp, vExisting) === 0) {
-                const existingBundleValid = (existing.bundleIdentifier || '').includes('.');
-                const appBundleValid = (app.bundleIdentifier || '').includes('.');
-                if (!existingBundleValid && appBundleValid) {
-                    nameDedup.set(nName, app);
-                }
-            }
-        }
-    });
-    const afterNameDedup = Array.from(nameDedup.values());
-    console.log(`  Sau bước 1 (gộp tên): ${afterNameDedup.length} app (loại ${mergedApps.length - afterNameDedup.length})`);
-
-    // Bước 2: Gộp theo mô tả (chỉ lọc app không phải tiếng Việt)
+    // Gộp theo mô tả (chỉ lọc app không phải tiếng Việt)
     const descDedup = new Map();
-    afterNameDedup.forEach(app => {
+    mergedApps.forEach(app => {
         const desc = app.localizedDescription || '';
         // App tiếng Việt: giữ nguyên, không lọc
         if (isVietnamese(desc)) {
@@ -355,7 +334,7 @@ async function mergeRepos() {
     });
     const dedupedApps = Array.from(descDedup.values());
     const totalRemoved = mergedApps.length - dedupedApps.length;
-    console.log(`  Sau bước 2 (gộp mô tả): ${dedupedApps.length} app`);
+    console.log(`  Sau khi gộp mô tả: ${dedupedApps.length} app`);
     console.log(`  Tổng cộng đã loại ${totalRemoved} app trùng`);
 
     // === DỊCH MÔ TẢ SANG TIẾNG ANH ===
@@ -428,7 +407,7 @@ async function mergeRepos() {
         return true;
     });
     const removedEmpty = dedupedApps.length - filteredApps.length;
-    console.log(`  Đã loại bỏ ${removedEmpty} app không có link tải`);
+    console.log(`  Đã loại bỏ ${removedEmpty} app không có link tải hoặc link lỗi`);
 
     // Bước 2: Bỏ tab Ứng dụng - Chỉ giữ Game (type: 2) và Plugin/Tweak (type: 5)
     // (Đã bỏ lọc này để hiển thị đầy đủ tất cả app, không chia tab)
