@@ -37,6 +37,34 @@ function cleanAndExtractFeatures(desc) {
     return desc.trim();
 }
 
+// Chuẩn hóa tên app để so sánh trùng lặp
+function normalizeName(name) {
+    if (!name) return '';
+    let normalized = name
+        .toLowerCase()
+        .replace(/[™®©]/g, '')           // Bỏ ký hiệu thương hiệu
+        .replace(/\s*-\s*hack\s*#?\d*/gi, '')  // Bỏ "- Hack #1", "- Hack #2"
+        .replace(/\s*\(hack(?:ed)?\s*#?\d*\)/gi, '') // Bỏ "(Hack #2)", "(hacked #3)"
+        .replace(/\s*hack$/gi, '')        // Bỏ "Hack" ở cuối
+        .replace(/\s*ipa\s*mod\s*/gi, '') // Bỏ "IPA Mod"
+        .replace(/\s*-\s*daily.*$/gi, '') // Bỏ "- Daily English Vocab"
+        .replace(/\s*-\s*learn.*$/gi, '') // Bỏ "- Learn English Daily"
+        .replace(/[:：].*$/g, '')          // Bỏ phần sau dấu ":" (ví dụ: "365Scores: Live Scores & News")
+        .replace(/\s*\(.*\)\s*/g, '')     // Bỏ nội dung trong ngoặc
+        .trim();
+
+    // Nếu tên chứa ký tự Latin (a-z), loại bỏ các ký tự phi Latin (như tiếng Trung, tiếng Ả Rập)
+    // để gộp các bản như "Douyin 抖音" và "Douyin" lại với nhau.
+    const latinMatch = normalized.match(/[a-z]/g);
+    if (latinMatch && latinMatch.length >= 2) {
+        normalized = normalized.replace(/[^a-z0-9]/g, '');
+    } else {
+        // Nếu không có đủ ký tự Latin, giữ lại ký tự CJK và Arabic để tránh gộp nhầm
+        normalized = normalized.replace(/[^a-z0-9\u4e00-\u9fff\u0600-\u06ff]/g, '');
+    }
+    return normalized.trim();
+}
+
 async function mergeRepos() {
     console.log("Bắt đầu gộp repo tại build-time...");
     
@@ -90,13 +118,15 @@ async function mergeRepos() {
 
     const uniqueAppsMap = new Map();
     allApps.forEach(app => {
-        const key = app.bundleIdentifier || app.bundleID || app.name;
+        let bundleId = (app.bundleIdentifier || app.bundleID || '').trim();
+        let appName = (app.name || '').trim();
+        const key = bundleId || appName;
         if (!key) return;
 
         const optimizedApp = {
-            name: app.name || 'Ứng dụng',
-            bundleIdentifier: app.bundleIdentifier || app.bundleID || key,
-            version: app.version || (app.versions && app.versions[0] && app.versions[0].version) || '1.0',
+            name: appName || 'Ứng dụng',
+            bundleIdentifier: bundleId || key,
+            version: (app.version || (app.versions && app.versions[0] && app.versions[0].version) || '1.0').toString().trim(),
             size: app.size || (app.versions && app.versions[0] && app.versions[0].size) || 0
         };
 
@@ -216,19 +246,120 @@ async function mergeRepos() {
     });
 
     const mergedApps = Array.from(uniqueAppsMap.values());
+    console.log(`Sau khi gộp theo bundleIdentifier: ${mergedApps.length} app`);
+
+    // === LỌC TRÙNG THEO MÔ TẢ ===
+    // Cùng mô tả = cùng app (dù tên khác nhau do các repo đặt tên khác nhau)
+    console.log(`\nĐang lọc trùng theo mô tả...`);
+    
+    function normalizeDesc(desc) {
+        if (!desc) return '';
+        return desc
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .replace(/[^a-z0-9]/g, '')
+            .trim();
+    }
+
+    const descDedup = new Map();
+    mergedApps.forEach(app => {
+        const nDesc = normalizeDesc(app.localizedDescription || '');
+        if (!nDesc || nDesc.length < 20) {
+            descDedup.set('__' + (app.bundleIdentifier || Math.random()), app);
+            return;
+        }
+        
+        const existing = descDedup.get(nDesc);
+        if (!existing) {
+            descDedup.set(nDesc, app);
+        } else {
+            const vExisting = existing.version || '0';
+            const vApp = app.version || '0';
+            if (compareVersions(vApp, vExisting) > 0) {
+                descDedup.set(nDesc, app);
+            } else if (compareVersions(vApp, vExisting) === 0) {
+                const existingBundleValid = (existing.bundleIdentifier || '').includes('.');
+                const appBundleValid = (app.bundleIdentifier || '').includes('.');
+                if (!existingBundleValid && appBundleValid) {
+                    descDedup.set(nDesc, app);
+                } else if ((app.name || '').length < (existing.name || '').length) {
+                    descDedup.set(nDesc, app);
+                }
+            }
+        }
+    });
+    const dedupedApps = Array.from(descDedup.values());
+    const totalRemoved = mergedApps.length - dedupedApps.length;
+    console.log(`  Đã loại bỏ ${totalRemoved} app trùng mô tả`);
+
+    // === DỊCH MÔ TẢ SANG TIẾNG ANH ===
+    console.log(`\nĐang dịch mô tả sang tiếng Anh...`);
+    
+    // Hàm phát hiện ngôn ngữ không phải tiếng Anh (giữ nguyên tiếng Việt)
+    function isNonEnglish(text) {
+        if (!text) return false;
+        const hasArabic = /[\u0600-\u06FF]/.test(text);
+        const hasCJK = /[\u4E00-\u9FFF\u3400-\u4DBF]/.test(text);
+        const hasCyrillic = /[\u0400-\u04FF]/.test(text);
+        const hasThai = /[\u0E00-\u0E7F]/.test(text);
+        const hasKorean = /[\uAC00-\uD7AF\u1100-\u11FF]/.test(text);
+        const hasHebrew = /[\u0590-\u05FF]/.test(text);
+        const hasDevanagari = /[\u0900-\u097F]/.test(text);
+        // Tiếng Việt giữ nguyên, KHÔNG dịch
+        return hasArabic || hasCJK || hasCyrillic || hasThai || hasKorean || hasHebrew || hasDevanagari;
+    }
+
+    // Dịch batch các mô tả
+    async function translateToEnglish(text) {
+        if (!text) return text;
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                },
+                signal: AbortSignal.timeout(10000)
+            });
+            if (!response.ok) return text;
+            const data = await response.json();
+            return data[0]?.map(s => s[0]).join('') || text;
+        } catch {
+            return text;
+        }
+    }
+
+    let translatedCount = 0;
+    const BATCH_SIZE = 20;
+    for (let i = 0; i < dedupedApps.length; i += BATCH_SIZE) {
+        const batch = dedupedApps.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(async (app) => {
+            const desc = app.localizedDescription || app.description || '';
+            if (desc && isNonEnglish(desc)) {
+                const translated = await translateToEnglish(desc);
+                if (translated !== desc) {
+                    app.localizedDescription = translated;
+                    translatedCount++;
+                }
+            }
+        }));
+        if ((i + BATCH_SIZE) % 200 === 0 || i + BATCH_SIZE >= dedupedApps.length) {
+            console.log(`  Đã xử lý: ${Math.min(i + BATCH_SIZE, dedupedApps.length)}/${dedupedApps.length} app`);
+        }
+    }
+    console.log(`  Đã dịch ${translatedCount} mô tả sang tiếng Anh`);
 
     // === LỌC APP CÓ LINK TẢI LỖI HOẶC TRỐNG ===
     console.log(`\nĐang lọc link tải lỗi...`);
     
     // Bước 1: Luôn loại bỏ app không có downloadURL
-    let filteredApps = mergedApps.filter(app => {
+    let filteredApps = dedupedApps.filter(app => {
         const url = app.downloadURL;
         if (!url || url.toString().trim() === '') {
             return false;
         }
         return true;
     });
-    const removedEmpty = mergedApps.length - filteredApps.length;
+    const removedEmpty = dedupedApps.length - filteredApps.length;
     console.log(`  Đã loại bỏ ${removedEmpty} app không có link tải`);
 
     // Bước 2: Bỏ tab Ứng dụng - Chỉ giữ Game (type: 2) và Plugin/Tweak (type: 5)
