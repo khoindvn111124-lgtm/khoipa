@@ -92,7 +92,7 @@ async function mergeRepos() {
                     'User-Agent': 'Esign/1.0 (iPhone; iOS 16.0; Scale/3.00)',
                     'Accept': 'application/json, text/plain, */*'
                 },
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(30000)
             });
 
             if (!response.ok) return;
@@ -248,26 +248,49 @@ async function mergeRepos() {
     const mergedApps = Array.from(uniqueAppsMap.values());
     console.log(`Sau khi gộp theo bundleIdentifier: ${mergedApps.length} app`);
 
+    // === XÓA PREFIX KHÔI / IPAOMTK TRONG MÔ TẢ ===
+    console.log(`\nĐang dọn mô tả (xóa prefix ipaomtk.com | khoi)...`);
+    mergedApps.forEach(app => {
+        let desc = app.localizedDescription || app.description || '';
+        if (desc) {
+            desc = desc.replace(/^ipaomtk\.com\s*\|\s*/i, '');
+            desc = desc.replace(/^khoi\s*\|\s*/i, '');
+            desc = desc.replace(/^khoi\s*/i, '');
+            app.localizedDescription = desc;
+        }
+    });
+
     // === LỌC TRÙNG THEO TÊN + MÔ TẢ ===
-    // Bước 1: Gộp theo tên, chỉ loại khi cùng tên VÀ cùng mô tả
-    //         (cùng tên nhưng mô tả khác → app khác → giữ lại)
-    // Bước 2: Gộp theo mô tả (cùng mô tả = cùng app dù tên khác nhau)
+    // Chỉ lọc trùng app có mô tả ngôn ngữ khác (Anh, Trung, Nga...)
+    // App có mô tả tiếng Việt → giữ nguyên, KHÔNG lọc
     console.log(`\nĐang lọc trùng theo tên + mô tả...`);
     
+    function isVietnamese(text) {
+        const viPattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+        return viPattern.test(text || '');
+    }
+
     function normalizeDesc(desc) {
         if (!desc) return '';
         return desc
             .toLowerCase()
             .replace(/\s+/g, ' ')
-            .replace(/[^a-z0-9]/g, '')
+            .replace(/[^a-z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/g, '')
             .trim();
     }
 
     // Bước 1: Gộp theo tên - cùng tên chỉ giữ bản version cao nhất
+    //         (trừ app tiếng Việt: giữ hết, không gộp)
     const nameDedup = new Map();
     mergedApps.forEach(app => {
         const nName = normalizeName(app.name);
         if (!nName) { nameDedup.set('__' + Math.random(), app); return; }
+        const desc = app.localizedDescription || '';
+        // App tiếng Việt: không gộp, giữ hết
+        if (isVietnamese(desc)) {
+            nameDedup.set('__vi_' + (app.bundleIdentifier || Math.random()), app);
+            return;
+        }
         
         const existing = nameDedup.get(nName);
         if (!existing) {
@@ -287,12 +310,18 @@ async function mergeRepos() {
         }
     });
     const afterNameDedup = Array.from(nameDedup.values());
-    console.log(`  Sau bước 1 (gộp tên+mô tả): ${afterNameDedup.length} app (loại ${mergedApps.length - afterNameDedup.length})`);
+    console.log(`  Sau bước 1 (gộp tên): ${afterNameDedup.length} app (loại ${mergedApps.length - afterNameDedup.length})`);
 
-    // Bước 2: Gộp theo mô tả
+    // Bước 2: Gộp theo mô tả (chỉ lọc app không phải tiếng Việt)
     const descDedup = new Map();
     afterNameDedup.forEach(app => {
-        const nDesc = normalizeDesc(app.localizedDescription || '');
+        const desc = app.localizedDescription || '';
+        // App tiếng Việt: giữ nguyên, không lọc
+        if (isVietnamese(desc)) {
+            descDedup.set('__vi_' + (app.bundleIdentifier || Math.random()), app);
+            return;
+        }
+        const nDesc = normalizeDesc(desc);
         if (!nDesc || nDesc.length < 20) {
             descDedup.set('__' + (app.bundleIdentifier || Math.random()), app);
             return;
